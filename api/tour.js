@@ -45,4 +45,16 @@ export default async function handler(req) {
     if (data.error) {
       return new Response(JSON.stringify({ error: data.error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json',
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      });
+    }
+    return new Response(JSON.stringify({ tour: data.content?.[0]?.text || '' }), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  } catch(e) {
+    return new Response(JSON.stringify({ error: 'API returned: ' + text.substring(0, 100) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    });
+  }
+}
