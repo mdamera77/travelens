@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Travelens — GPS for the Wandering Soul</title>
+
+  <!-- PWA Meta -->
+  <meta name="description" content="AI-powered personalised walking tours for any city in the world." />
+  <meta name="theme-color" content="#1D9E75" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Travelens" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="manifest" href="/manifest.json" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #1D9E75;
+      --green-dark: #0F6E56;
+      --green-light: #E1F5EE;
+      --amber: #EF9F27;
+      --amber-light: #FAEEDA;
+      --text: #1a1a1a;
+      --text-muted: #666;
+      --border: rgba(0,0,0,0.1);
+      --bg: #f8f8f6;
+      --card: #ffffff;
+      --radius: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #f0f0ee;
+        --text-muted: #999;
+        --border: rgba(255,255,255,0.1);
+        --bg: #141412;
+        --card: #1e1e1c;
+        --green-light: #0a3326;
+        --amber-light: #2a1e08;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .app { max-width: 480px; margin: 0 auto; padding: 0 16px 40px; }
+
+    /* Hero */
+    .hero { text-align: center; padding: 48px 0 28px; }
+    .hero-icon { width: 64px; height: 64px; background: var(--green); border-radius: 18px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; }
+    .hero-icon svg { width: 36px; height: 36px; fill: none; stroke: white; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .logo { font-size: 30px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .logo span { color: var(--green); }
+    .tagline { font-size: 13px; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.3px; }
+
+    /* Card */
+    .card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 20px; margin-bottom: 14px; }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-of-type { margin-bottom: 0; }
+    label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
+    input { width: 100%; padding: 11px 14px; font-size: 15px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); outline: none; -webkit-appearance: none; }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+    input::placeholder { color: var(--text-muted); }
+
+    /* Pills */
+    .section-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+    .pill-group { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pill { padding: 6px 13px; border-radius: 20px; font-size: 13px; border: 0.5px solid var(--border); background: var(--bg); color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; user-select: none; }
+    .pill.active { background: var(--green-light); border-color: var(--green); color: var(--green-dark); font-weight: 600; }
+
+    /* Button */
+    .btn { width: 100%; padding: 15px; background: var(--green); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; -webkit-tap-highlight-color: transparent; transition: opacity 0.15s, transform 0.1s; }
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; }
+
+    /* Output */
+    .output { display: none; }
+    .output.visible { display: block; }
+
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
+    .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
+
+    .tour-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .tour-title { font-size: 20px; font-weight: 700; color: var(--text); }
+    .ai-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--green-light); color: var(--green-dark); font-weight: 600; }
+
+    .stop-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); border-left: 3px solid var(--green); padding: 16px; margin-bottom: 10px; }
+    .stop-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .stop-num { background: var(--green); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .stop-name { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+    .stop-time { font-size: 12px; color: var(--text-muted); }
+    .stop-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+
+    .tidbits-label { font-size: 11px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .tidbit { font-size: 13px; color: var(--text-muted); line-height: 1.5; padding: 7px 10px; border-left: 2px solid var(--amber); margin-bottom: 5px; font-style: italic; background: var(--amber-light); border-radius: 0 6px 6px 0; }
+
+    .walk-note { font-size: 12px; color: var(--green-dark); margin: 8px 0 0; display: flex; align-items: flex-start; gap: 5px; }
+
+    .tip-box { background: var(--green-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; color: var(--green-dark); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+
+    .reset-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 6px; -webkit-tap-highlight-color: transparent; }
+
+    .error-box { background: #FCEBEB; border-radius: 10px; padding: 14px; color: #A32D2D; font-size: 14px; margin-bottom: 14px; }
+
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .install-banner { display: none; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; align-items: center; gap: 12px; }
+    .install-banner.show { display: flex; }
+    .install-banner p { font-size: 13px; color: var(--text-muted); flex: 1; line-height: 1.4; }
+    .install-btn { padding: 8px 14px; background: var(--green); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Install Banner (Android) -->
+  <div class="install-banner" id="install-banner">
+    <div>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <p>Add Travelens to your home screen for the best experience.</p>
+    <button class="install-btn" id="install-btn">Install</button>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    </div>
+    <div class="logo">Travel<span>ens</span></div>
+    <div class="tagline">GPS for the wandering soul</div>
+  </div>
+
+  <!-- Form -->
+  <div class="card" id="form-section">
+    <div class="form-group">
+      <label>Where are you going?</label>
+      <input type="text" id="city" placeholder="Prague, Tokyo, Oaxaca..." autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Your hotel or starting point</label>
+      <input type="text" id="hotel" placeholder="Hotel name or neighbourhood" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Travel dates</label>
+      <input type="text" id="dates" placeholder="e.g. Aug 21–24, 2026" autocomplete="off" />
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">What's your vibe?</div>
+    <div class="pill-group" id="vibes">
+      <div class="pill active" data-val="Old Town history and architecture">History & architecture</div>
+      <div class="pill" data-val="Food, markets and local life">Food & markets</div>
+      <div class="pill active" data-val="Hidden gems off the tourist trail">Hidden gems</div>
+      <div class="pill" data-val="Art and culture">Art & culture</div>
+      <div class="pill" data-val="Dark history and untold stories">Dark history</div>
+      <div class="pill" data-val="Nature and parks">Nature & parks</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Walking stamina</div>
+    <div class="pill-group" id="stamina">
+      <div class="pill" data-val="easy 2-hour stroll">Easy 2h stroll</div>
+      <div class="pill active" data-val="solid half-day, 10,000 steps">Half-day (10k steps)</div>
+      <div class="pill" data-val="full day adventure, 15,000+ steps">Full day (15k+ steps)</div>
+    </div>
+  </div>
+
+  <button class="btn" id="gen-btn" onclick="generateTour()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+    Build my tour
+  </button>
+
+  <!-- Output -->
+  <div class="output" id="output-section">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div id="output-content"></div>
+    <button class="reset-btn" onclick="resetForm()">↩ Plan another tour</button>
+  </div>
+
+</div>
+
+<script>
+  // Pill toggle
+  document.querySelectorAll('.pill-group').forEach(g => {
+    g.querySelectorAll('.pill').forEach(p => {
+      p.addEventListener('click', () => p.classList.toggle('active'));
+    });
+  });
+
+  function getSelected(id) {
+    return [...document.querySelectorAll(`#${id} .pill.active`)].map(p => p.dataset.val).join(', ');
+  }
+
+  // PWA Install
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    document.getElementById('install-banner').classList.add('show');
+  });
+  document.getElementById('install-btn')?.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('install-banner').classList.remove('show');
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('form-section').style.display = 'block';
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('output-content').innerHTML = '';
+    document.getElementById('progress-fill').style.width = '0%';
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg> Build my tour';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderOutput(text, city) {
+    const content = document.getElementById('output-content');
+    content.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'tour-header';
+    header.innerHTML = `<div class="tour-title">Your ${city} tour</div><div class="ai-badge">AI guide</div>`;
+    content.appendChild(header);
+
+    const lines = text.split('\n').filter(l => l.trim());
+    let currentStop = null;
+    let inTidbits = false;
+
+    lines.forEach(line => {
+      const l = line.trim();
+
+      if (l.startsWith('TIP:')) {
+        inTidbits = false;
+        const tip = document.createElement('div');
+        tip.className = 'tip-box';
+        tip.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>${l.replace('TIP:', '').trim()}</span>`;
+        content.appendChild(tip);
+      } else if (/^STOP\s*\d+/i.test(l)) {
+        inTidbits = false;
+        currentStop = document.createElement('div');
+        currentStop.className = 'stop-card';
+        const match = l.match(/STOP\s*(\d+)[:\-\s]+(.+?)(?:\s*\|\s*(.+))?$/i);
+        if (match) {
+          const sh = document.createElement('div');
+          sh.className = 'stop-header';
+          sh.innerHTML = `<div class="stop-num">${match[1]}</div><div class="stop-name">${match[2].trim()}</div>${match[3] ? `<div class="stop-time">${match[3].trim()}</div>` : ''}`;
+          currentStop.appendChild(sh);
+        }
+        content.appendChild(currentStop);
+      } else if (/^TIDBIT/i.test(l)) {
+        inTidbits = true;
+        if (currentStop) {
+          const tl = document.createElement('div');
+          tl.className = 'tidbits-label';
+          tl.textContent = '✦ Tour guide tidbits';
+          currentStop.appendChild(tl);
+        }
+      } else if (/^WALK:/i.test(l)) {
+        inTidbits = false;
+        const w = document.createElement('div');
+        w.className = 'walk-note';
+        w.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="4" r="2"/><path d="M9 12l2 2 4-4M7 14l-2 5h14l-2-5"/></svg>${l.replace(/^WALK:/i, '').trim()}`;
+        if (currentStop) currentStop.appendChild(w);
+      } else if (/^[-*•]\s/.test(l)) {
+        const txt = l.replace(/^[-*•]\s*/, '');
+        if (inTidbits && currentStop) {
+          const td = document.createElement('div');
+          td.className = 'tidbit';
+          td.textContent = txt;
+          currentStop.appendChild(td);
+        } else if (currentStop) {
+          const p = document.createElement('div');
+          p.className = 'stop-desc';
+          p.textContent = txt;
+          currentStop.appendChild(p);
+        }
+      } else if (l.length > 15) {
+        if (currentStop && !inTidbits) {
+          const existing = currentStop.querySelector('.stop-desc');
+          if (existing) { existing.textContent += ' ' + l; }
+          else {
+            const p = document.createElement('div');
+            p.className = 'stop-desc';
+            p.textContent = l;
+            currentStop.appendChild(p);
+          }
+        } else if (inTidbits && currentStop) {
+          const td = document.createElement('div');
+          td.className = 'tidbit';
+          td.textContent = l;
+          currentStop.appendChild(td);
+        }
+      }
+    });
+  }
+
+  async function generateTour() {
+    const city = document.getElementById('city').value.trim();
+    const hotel = document.getElementById('hotel').value.trim();
+    const dates = document.getElementById('dates').value.trim();
+    const vibes = getSelected('vibes');
+    const stamina = getSelected('stamina');
+
+    if (!city) { document.getElementById('city').focus(); return; }
+
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Building your tour...';
+
+    document.getElementById('form-section').style.display = 'none';
+    const out = document.getElementById('output-section');
+    out.classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const fill = document.getElementById('progress-fill');
+    let prog = 0;
+    const ticker = setInterval(() => {
+      prog = Math.min(prog + Math.random() * 7, 85);
+      fill.style.width = prog + '%';
+    }, 400);
+
+    const prompt = `You are Travelens, a brilliant local guide AI. Build a personalised walking tour.
+
+City: ${city}
+Starting point: ${hotel || 'city centre'}
+Dates: ${dates || 'upcoming trip'}
+Interests: ${vibes || 'history, food, hidden gems'}
+Stamina: ${stamina || 'half-day'}
+
+RETURN EXACTLY THIS FORMAT — no markdown, no asterisks for bold, no extra commentary:
+
+STOP 1: [Name] | [Time e.g. 09:00]
+[2-3 sentence description — what they see, feel, experience]
+TIDBITS
+- [Surprising specific fact with real names, dates, human stories]
+- [Something sensory or visual most visitors miss]
+- [Local secret or funny/moving anecdote]
+WALK: [Direction and walking time to next stop]
+
+STOP 2: [Name] | [Time]
+[Description]
+TIDBITS
+- [Tidbit]
+- [Tidbit]
+- [Tidbit]
+WALK: [Direction]
+
+[Continue for 5 stops total]
+
+TIP: [Practical tip — opening times, what to wear, where to eat]
+TIP: [One local secret that transforms the experience]
+
+Tidbits must be genuinely surprising — specific, human, unexpected. Make people say "I had no idea."`;
+
+    try {
+      const res = await fetch('/api/tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await res.json();
+      clearInterval(ticker);
+      fill.style.width = '100%';
+
+      if (data.error) throw new Error(data.error.message);
+
+      const text = data.content?.[0]?.text || '';
+      setTimeout(() => renderOutput(text, city), 400);
+
+    } catch (err) {
+      clearInterval(ticker);
+      document.getElementById('output-content').innerHTML =
+        `<div class="error-box"><strong>Could not generate tour.</strong><br>${err.message || 'Check your connection and try again.'}</div>`;
+      btn.disabled = false;
+      btn.innerHTML = 'Try again';
+    }
+  }
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
