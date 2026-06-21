@@ -371,26 +371,24 @@ TIP: [One local secret that transforms the experience]
 
 Tidbits must be genuinely surprising — specific, human, unexpected. Make people say "I had no idea."`;
 
-    try {
+   try {
       const res = await fetch('/api/tour', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
+          city: city,
+          hotel: hotel,
+          dates: dates,
+          vibes: vibes,
+          stamina: stamina
         })
       });
-
       const data = await res.json();
       clearInterval(ticker);
       fill.style.width = '100%';
-
-      if (data.error) throw new Error(data.error.message);
-
-      const text = data.content?.[0]?.text || '';
+      if (data.error) throw new Error(data.error);
+      const text = data.tour || '';
       setTimeout(() => renderOutput(text, city), 400);
-
     } catch (err) {
       clearInterval(ticker);
       document.getElementById('output-content').innerHTML =
@@ -399,7 +397,6 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
       btn.innerHTML = 'Try again';
     }
   }
-
   // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
