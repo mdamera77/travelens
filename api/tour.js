@@ -1,74 +1,48 @@
 export const config = { runtime: 'edge' };
 
 export default async function handler(req) {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      }
-    });
-  }
-
-  const { city, hotel, dates, vibes, stamina } = await req.json();
-
-  if (!city) return new Response(JSON.stringify({ error: 'City is required' }), { status: 400 });
-
-  const prompt = `You are Travelens, a brilliant local guide AI. Build a personalised walking tour.
-
-City: ${city}
-Starting point: ${hotel || 'city centre'}
-Dates: ${dates || 'upcoming trip'}
-Interests: ${vibes || 'history, food, hidden gems'}
-Stamina: ${stamina || 'half-day'}
-
-RETURN EXACTLY THIS FORMAT — no markdown, no asterisks for bold, no extra commentary:
-
-STOP 1: [Name] | [Time e.g. 09:00]
-[2-3 sentence description]
-TIDBITS
-- [Surprising specific fact]
-- [Something most visitors miss]
-- [Local secret or anecdote]
-WALK: [Direction and walking time to next stop]
-
-Continue for 5 stops total.
-
-TIP: [Practical tip]
-TIP: [One local secret]
-
-Tidbits must be genuinely surprising — specific, human, unexpected.`;
-
+  const body = await req.text();
+  console.log('Raw body received:', body);
+  
+  let city, hotel, dates, vibes, stamina;
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-
-    return new Response(JSON.stringify({ tour: data.content?.[0]?.text || '' }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
-    });
-
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
+    const parsed = JSON.parse(body);
+    city = parsed.city;
+    hotel = parsed.hotel;
+    dates = parsed.dates;
+    vibes = parsed.vibes;
+    stamina = parsed.stamina;
+  } catch(e) {
+    return new Response(JSON.stringify({ error: 'Bad request: ' + e.message }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
   }
-}
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log('API key present:', !!apiKey, 'starts with:', apiKey?.substring(0, 10));
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1200,
+      messages: [{ role: 'user', content: `Build a 5-stop walking tour for ${city || 'Paris'}. Starting from ${hotel || 'city centre'}. Interests: ${vibes || 'history'}. Format each stop as: STOP 1: Name | Time, description, TIDBITS, - tidbit, WALK: direction` }]
+    })
+  });
+
+  const text = await response.text();
+  console.log('Anthropic response status:', response.status);
+  console.log('Anthropic response:', text.substring(0, 200));
+
+  try {
+    const data = JSON.parse(text);
+    if (data.error) {
+      return new Response(JSON.stringify({ error: data.error.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json',
