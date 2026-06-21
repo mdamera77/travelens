@@ -1,16 +1,19 @@
-export default async function handler(req, res) {
+export const config = { runtime: 'edge' };
+
+export default async function handler(req) {
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return res.status(200).end();
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
   }
 
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const { city, hotel, dates, vibes, stamina } = await req.json();
 
-  const { city, hotel, dates, vibes, stamina } = req.body;
-
-  if (!city) return res.status(400).json({ error: 'City is required' });
+  if (!city) return new Response(JSON.stringify({ error: 'City is required' }), { status: 400 });
 
   const prompt = `You are Travelens, a brilliant local guide AI. Build a personalised walking tour.
 
@@ -23,27 +26,19 @@ Stamina: ${stamina || 'half-day'}
 RETURN EXACTLY THIS FORMAT — no markdown, no asterisks for bold, no extra commentary:
 
 STOP 1: [Name] | [Time e.g. 09:00]
-[2-3 sentence description — what they see, feel, experience]
+[2-3 sentence description]
 TIDBITS
-- [Surprising specific fact with real names, dates, human stories]
-- [Something sensory or visual most visitors miss]
-- [Local secret or funny/moving anecdote]
+- [Surprising specific fact]
+- [Something most visitors miss]
+- [Local secret or anecdote]
 WALK: [Direction and walking time to next stop]
 
-STOP 2: [Name] | [Time]
-[Description]
-TIDBITS
-- [Tidbit]
-- [Tidbit]
-- [Tidbit]
-WALK: [Direction]
+Continue for 5 stops total.
 
-[Continue for 5 stops total]
+TIP: [Practical tip]
+TIP: [One local secret]
 
-TIP: [Practical tip — opening times, what to wear, where to eat]
-TIP: [One local secret that transforms the experience]
-
-Tidbits must be genuinely surprising — specific, human, unexpected. Make people say "I had no idea."`;
+Tidbits must be genuinely surprising — specific, human, unexpected.`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -63,10 +58,17 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
     const data = await response.json();
     if (data.error) throw new Error(data.error.message);
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.status(200).json({ tour: data.content?.[0]?.text || '' });
+    return new Response(JSON.stringify({ tour: data.content?.[0]?.text || '' }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
 
   } catch (err) {
-    res.status(500).json({ error: err.message || 'Tour generation failed' });
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
