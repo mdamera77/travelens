@@ -157,7 +157,7 @@
   </div>
 
   <!-- Form -->
-  <div class="card" id="form-section">
+  <div class="card" id="form-section" style="display:none">
   <div class="form-group" style="position:relative">
       <label>Where are you going?</label>
       <input type="text" id="city" placeholder="Prague, Tokyo, Oaxaca..." autocomplete="off" oninput="citySearch(this.value)" />
@@ -468,7 +468,6 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
   function initGreeting() {
     const name = localStorage.getItem('travelens_name');
     if (!name) {
-      // First visit — show greeting screen
       document.getElementById('main-hero').style.display = 'none';
       document.getElementById('greeting-screen').style.display = 'flex';
       document.getElementById('greeting-message').textContent = 
@@ -477,7 +476,6 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
         if (e.key === 'Enter') saveName();
       });
     } else {
-      // Returning user
       document.getElementById('greeting-screen').style.display = 'none';
       document.getElementById('main-hero').style.display = 'block';
       document.getElementById('form-section').style.display = 'block';
