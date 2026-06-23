@@ -86,6 +86,28 @@
     .audio-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .audio-progress { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
     .audio-progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+    .site-links { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .site-link { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.15s; }
+    .site-link:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(29,158,117,0.1); }
+    .site-link svg { margin-left: auto; flex-shrink: 0; color: var(--text-muted); }
+    .site-icon { font-size: 20px; flex-shrink: 0; }
+    .site-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .site-desc { font-size: 12px; color: var(--text-muted); }
+    .paste-section { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 4px; }
+    .paste-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .paste-row { display: flex; gap: 8px; }
+    .paste-row input { flex: 1; padding: 11px 14px; font-size: 14px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); outline: none; }
+    .paste-row input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+    .paste-go-btn { width: 44px; height: 44px; background: var(--green); color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.15s; }
+    .paste-go-btn:hover { opacity: 0.9; }
+    .url-status { font-size: 13px; margin-top: 10px; padding: 10px 12px; border-radius: 8px; }
+    .url-status.loading { background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; gap: 8px; }
+    .url-status.error { background: #FCEBEB; color: #A32D2D; }
+    .tour-preview { background: var(--green-light); border-radius: 10px; padding: 14px; margin-top: 10px; }
+    .tour-preview-title { font-size: 14px; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+    .tour-preview-stops { font-size: 12px; color: var(--green-dark); line-height: 1.6; margin-bottom: 12px; }
+    .tour-preview-btn { width: 100%; padding: 12px; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
     /* Tour browse screen */
     #browse-section { display: none; }
     .browse-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
@@ -209,14 +231,57 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
         Back
       </button>
-      <div class="browse-title" id="browse-title">Tours in Prague</div>
-      <div class="browse-subtitle">Real tours from GuruWalk, FreeTour & more — pick one and we'll build your guide</div>
-      <div id="tour-cards-container">
-        <div class="loading-tours">
-          <div class="spinner"></div>
-          Finding real tours for you...
-        </div>
+      <div class="browse-title" id="browse-title">Find a tour in Prague</div>
+      <div class="browse-subtitle">Browse these sites, find a tour you like, then paste the link below</div>
+
+      <!-- Site links -->
+      <div class="site-links">
+        <a class="site-link guruwalk" id="link-guruwalk" href="#" target="_blank">
+          <span class="site-icon">🟠</span>
+          <div>
+            <div class="site-name">GuruWalk</div>
+            <div class="site-desc">Free tours with local guides</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="site-link freetour" id="link-freetour" href="#" target="_blank">
+          <span class="site-icon">🔵</span>
+          <div>
+            <div class="site-name">FreeTour.com</div>
+            <div class="site-desc">Free walking tours worldwide</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="site-link getyourguide" id="link-getyourguide" href="#" target="_blank">
+          <span class="site-icon">🔴</span>
+          <div>
+            <div class="site-name">GetYourGuide</div>
+            <div class="site-desc">Tours & activities worldwide</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="site-link foot" id="link-foot" href="#" target="_blank">
+          <span class="site-icon">🟢</span>
+          <div>
+            <div class="site-name">FreeToursByFoot</div>
+            <div class="site-desc">Self-guided & free tours</div>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
       </div>
+
+      <!-- Paste URL -->
+      <div class="paste-section">
+        <div class="paste-label">Found a tour you like? Paste the link here:</div>
+        <div class="paste-row">
+          <input type="text" id="tour-url-input" placeholder="https://www.guruwalk.com/walks/..." autocomplete="off" />
+          <button class="paste-go-btn" onclick="buildFromURL()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          </button>
+        </div>
+        <div id="url-status" class="url-status" style="display:none;"></div>
+      </div>
+
       <div class="or-divider">or</div>
       <button class="skip-btn" onclick="skipToAI()">✨ Build me an AI tour instead</button>
     </div>
@@ -558,6 +623,14 @@
   // ── TOUR BROWSING ─────────────────────────────────────────────
   let selectedTourContext = null;
 
+  // City-specific search URLs for each platform
+  const tourSiteURLs = {
+    guruwalk: city => `https://www.guruwalk.com/walks?q=${encodeURIComponent(city)}`,
+    freetour: city => `https://www.freetour.com/search?q=${encodeURIComponent(city)}`,
+    getyourguide: city => `https://www.getyourguide.com/s/?q=${encodeURIComponent(city + ' walking tour')}&searchSource=1`,
+    foot: city => `https://www.freetoursbyfoot.com/?s=${encodeURIComponent(city)}`
+  };
+
   function showForm() {
     document.getElementById('form-section').style.display = 'block';
     document.getElementById('browse-section').style.display = 'none';
@@ -573,74 +646,78 @@
     if (!city) { document.getElementById('city').focus(); return; }
 
     const cityName = city.split(',')[0];
-    document.getElementById('browse-title').textContent = `Tours in ${cityName}`;
+
+    // Update site links with city-specific URLs
+    document.getElementById('link-guruwalk').href = tourSiteURLs.guruwalk(cityName);
+    document.getElementById('link-freetour').href = tourSiteURLs.freetour(cityName);
+    document.getElementById('link-getyourguide').href = tourSiteURLs.getyourguide(cityName);
+    document.getElementById('link-foot').href = tourSiteURLs.foot(cityName);
+
+    document.getElementById('browse-title').textContent = `Find a tour in ${cityName}`;
     document.getElementById('form-section').style.display = 'none';
     document.getElementById('browse-section').style.display = 'block';
-    document.getElementById('tour-cards-container').innerHTML = `
-      <div class="loading-tours">
-        <div class="spinner"></div>
-        Searching GuruWalk, FreeTour & more for ${cityName}...
-      </div>`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    try {
-      const res = await fetch('/api/tours', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city: cityName })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      renderTourCards(data.tours, cityName);
-    } catch(err) {
-      document.getElementById('tour-cards-container').innerHTML = `
-        <div class="error-box">Could not find tours. Try the AI tour below.</div>`;
-    }
   }
 
-  function renderTourCards(tours, city) {
-    const container = document.getElementById('tour-cards-container');
-    if (!tours?.length) {
-      container.innerHTML = `<div class="error-box">No tours found for ${city}. Try the AI tour below!</div>`;
+  async function buildFromURL() {
+    const url = document.getElementById('tour-url-input').value.trim();
+    const city = document.getElementById('city').value.split(',')[0].trim();
+    if (!url) {
+      document.getElementById('tour-url-input').focus();
       return;
     }
 
-    const sourceClass = {
-      'GuruWalk': 'source-guruwalk',
-      'FreeTour': 'source-freetour',
-      'GetYourGuide': 'source-getyourguide',
-      'FreeToursByFoot': 'source-foot',
-      'AI': 'source-ai'
-    };
+    const status = document.getElementById('url-status');
+    status.className = 'url-status loading';
+    status.style.display = 'flex';
+    status.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;border-color:rgba(29,158,117,0.3);border-top-color:var(--green);"></div> Reading tour details...';
 
-    container.innerHTML = tours.map((t, i) => `
-      <div class="tour-card" onclick="selectTour(${i})">
-        <span class="source-badge ${sourceClass[t.source] || 'source-ai'}">${t.source}</span>
-        <div class="tour-card-title">${t.title}</div>
-        <div class="tour-card-meta">
-          ${t.duration ? `<div class="tour-meta-item">⏱ ${t.duration}</div>` : ''}
-          ${t.price ? `<div class="tour-meta-item">💰 ${t.price}</div>` : ''}
-          ${t.rating ? `<div class="tour-meta-item">⭐ ${t.rating}</div>` : ''}
-          ${t.highlights?.length ? `<div class="tour-meta-item">📍 ${t.highlights.length} stops</div>` : ''}
-        </div>
-        <div class="tour-card-desc">${t.description}</div>
-        <div class="tour-card-footer">
-          ${t.url ? `<a class="tour-card-link" href="${t.url}" target="_blank" onclick="event.stopPropagation()">View on ${t.source} →</a>` : '<span></span>'}
-          <button class="select-btn">Build guide →</button>
-        </div>
-      </div>
-    `).join('');
+    try {
+      const res = await fetch('/api/fetch-tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, city })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
 
-    // Store tours for selection
-    window._foundTours = tours;
+      const tour = data.tour;
+      selectedTourContext = tour;
+
+      // Show preview
+      status.style.display = 'none';
+      const existing = document.getElementById('tour-preview-box');
+      if (existing) existing.remove();
+
+      const preview = document.createElement('div');
+      preview.id = 'tour-preview-box';
+      preview.className = 'tour-preview';
+      preview.innerHTML = `
+        <div class="tour-preview-title">✓ ${tour.title}</div>
+        <div class="tour-preview-stops">
+          ${tour.highlights?.length ? '📍 ' + tour.highlights.join(' → ') : tour.description}
+        </div>
+        <button class="tour-preview-btn" onclick="selectFoundTour()">Build my guide for this tour →</button>
+      `;
+      document.getElementById('url-status').after(preview);
+
+    } catch(err) {
+      status.className = 'url-status error';
+      status.style.display = 'block';
+      status.textContent = 'Could not read that URL. Try the AI tour below, or paste a different link.';
+    }
   }
 
-  function selectTour(index) {
-    const tour = window._foundTours[index];
-    selectedTourContext = tour;
+  function selectFoundTour() {
     document.getElementById('browse-section').style.display = 'none';
-    generateTour(tour);
+    generateTour(selectedTourContext);
   }
+
+  // Allow Enter key in URL input
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlInput = document.getElementById('tour-url-input');
+    if (urlInput) urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') buildFromURL(); });
+  });
   // ── END TOUR BROWSING ─────────────────────────────────────────
 
 
