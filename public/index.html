@@ -133,13 +133,27 @@
     <button class="install-btn" id="install-btn">Install</button>
   </div>
 
-  <!-- Hero -->
-  <div class="hero">
-    <div class="hero-icon">
+  <!-- Greeting Screen -->
+  <div id="greeting-screen" style="display:none;text-align:center;padding:60px 20px;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <div class="hero-icon" style="margin:0 auto 16px;">
       <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
     </div>
     <div class="logo">Travel<span>ens</span></div>
     <div class="tagline">GPS for the wandering soul</div>
+    <div id="greeting-message" style="font-size:18px;color:var(--text);margin:32px 0 24px;line-height:1.6;max-width:320px;"></div>
+    <input type="text" id="name-input" placeholder="Your name..." style="width:100%;max-width:300px;padding:13px 16px;font-size:16px;border:0.5px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;text-align:center;margin-bottom:12px;" />
+    <button onclick="saveName()" style="width:100%;max-width:300px;padding:13px;background:var(--green);color:white;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;">
+      Let's wander →
+    </button>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero" id="main-hero">
+    <div class="hero-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    </div>
+    <div class="logo">Travel<span>ens</span></div>
+    <div id="return-greeting" style="font-size:14px;color:var(--green-dark);margin-top:6px;font-style:italic;min-height:20px;"></div>
   </div>
 
   <!-- Form -->
@@ -463,6 +477,53 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
     if (!e.target.closest('#hotel-dropdown') && e.target.id !== 'hotel') 
       document.getElementById('hotel-dropdown').style.display = 'none';
   });
+  // Greeting system
+  const firstGreetings = [
+    "Before we start — what shall I call you, wandering soul?",
+    "Every great journey starts with a name. What's yours?",
+    "Welcome! I'm Travelens. And you are...?"
+  ];
+
+  const returnGreetings = [
+    (name) => `Welcome back, ${name}! Where is your heart leading you today?`,
+    (name) => `${name}! The wandering soul returns. Where to next?`,
+    (name) => `Hey ${name}! Ready for another adventure?`,
+    (name) => `Good to see you again, ${name}. What city is calling you?`,
+    (name) => `${name}! Your next story starts here. Where are we going?`
+  ];
+
+  function initGreeting() {
+    const name = localStorage.getItem('travelens_name');
+    if (!name) {
+      // First visit — show greeting screen
+      document.getElementById('main-hero').style.display = 'none';
+      document.getElementById('greeting-screen').style.display = 'flex';
+      document.getElementById('greeting-message').textContent = 
+        firstGreetings[Math.floor(Math.random() * firstGreetings.length)];
+      document.getElementById('name-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') saveName();
+      });
+    } else {
+      // Returning user
+      document.getElementById('greeting-screen').style.display = 'none';
+      document.getElementById('main-hero').style.display = 'block';
+      const greeting = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
+      document.getElementById('return-greeting').textContent = greeting(name);
+    }
+  }
+
+  function saveName() {
+    const name = document.getElementById('name-input').value.trim();
+    if (!name) return;
+    localStorage.setItem('travelens_name', name);
+    document.getElementById('greeting-screen').style.display = 'none';
+    document.getElementById('main-hero').style.display = 'block';
+    const greeting = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
+    document.getElementById('return-greeting').textContent = greeting(name);
+  }
+
+  // Run on load
+  initGreeting();
   // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
