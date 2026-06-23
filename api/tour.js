@@ -9,43 +9,60 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { city, hotel, dates, vibes, stamina, tourContext } = req.body;
-
-  const contextBlock = tourContext ? `Based on this real tour listing - Title: ${tourContext.title}, Stops: ${(tourContext.highlights||[]).join(", ")}, Description: ${tourContext.description}. Build the guide around these actual stops.` : "";
-
   if (!city) return res.status(400).json({ error: 'City is required' });
 
-  const prompt = `You are Travelens, a brilliant local guide AI. Build a personalised walking tour.
+  // Build the stop list instruction
+  const stopInstruction = tourContext?.highlights?.length
+    ? `CRITICAL — You MUST follow EXACTLY these stops in EXACTLY this order. Do NOT add, remove, skip, rename, or reorder any stop:
+${tourContext.highlights.map((s, i) => `STOP ${i + 1}: ${s}`).join('\n')}
 
+Total stops: ${tourContext.highlights.length}. Cover every single one.`
+    : `Build 5 interesting stops for ${city} starting near ${hotel || 'city centre'}.`;
+
+  const tourInfo = tourContext
+    ? `Real tour selected: "${tourContext.title}" from ${tourContext.source}`
+    : `AI-generated tour for ${city}`;
+
+  const prompt = `You are Travelens, a brilliant local guide AI.
+
+${tourInfo}
 City: ${city}
 Starting point: ${hotel || 'city centre'}
 Dates: ${dates || 'upcoming trip'}
 Interests: ${vibes || 'history, food, hidden gems'}
 Stamina: ${stamina || 'half-day'}
 
-RETURN EXACTLY THIS FORMAT — no markdown, no asterisks for bold, no extra commentary:
+${stopInstruction}
 
-STOP 1: [Name] | [Time e.g. 09:00]
-[2-3 sentence description — what they see, feel, experience]
+RETURN EXACTLY THIS FORMAT — no markdown, no asterisks, no extra commentary:
+
+STOP 1: [Exact stop name from list above] | [Time e.g. 09:00]
+[2-3 sentence description — what they see, feel, experience at THIS specific place]
 TIDBITS
-- [Surprising specific fact with real names, dates, human stories]
-- [Something sensory or visual most visitors miss]
-- [Local secret or funny/moving anecdote]
-WALK: [Direction and walking time to next stop]
+- [Surprising specific fact with real names, dates, human stories about THIS stop]
+- [Something sensory or visual most visitors miss at THIS stop]
+- [Local secret or moving anecdote about THIS specific place]
+WALK: [Specific walking direction and time to the NEXT stop on the list]
 
-STOP 2: [Name] | [Time]
+STOP 2: [Exact stop name] | [Time]
 [Description]
 TIDBITS
 - [Tidbit]
 - [Tidbit]
 - [Tidbit]
-WALK: [Direction]
+WALK: [Direction to next stop]
 
-[Continue for 5 stops total]
+[Continue for ALL stops listed above — every stop must appear]
 
-TIP: [Practical tip — opening times, what to wear, where to eat]
-TIP: [One local secret that transforms the experience]
+TIP: [Practical tip about this specific tour — opening times, what to bring, where to eat nearby]
+TIP: [One local secret that transforms the experience of this tour]
 
-Tidbits must be genuinely surprising — specific, human, unexpected. Make people say "I had no idea."`;
+Rules:
+- Use the EXACT stop names as given — do not rename or combine them
+- Follow the EXACT order given — do not reorder
+- Cover EVERY stop — do not skip any
+- Tidbits must be genuinely surprising — specific, human, unexpected
+- Make people say "I had no idea"`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -57,7 +74,7 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 1200,
+        max_tokens: 4000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
