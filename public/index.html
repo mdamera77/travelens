@@ -144,13 +144,15 @@
 
   <!-- Form -->
   <div class="card" id="form-section">
-    <div class="form-group">
+  <div class="form-group" style="position:relative">
       <label>Where are you going?</label>
-      <input type="text" id="city" placeholder="Prague, Tokyo, Oaxaca..." autocomplete="off" />
+      <input type="text" id="city" placeholder="Prague, Tokyo, Oaxaca..." autocomplete="off" oninput="citySearch(this.value)" />
+      <div id="city-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:0.5px solid var(--border);border-radius:10px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;margin-top:4px;"></div>
     </div>
-    <div class="form-group">
+    <div class="form-group" style="position:relative">
       <label>Your hotel or starting point</label>
-      <input type="text" id="hotel" placeholder="Hotel name or neighbourhood" autocomplete="off" />
+      <input type="text" id="hotel" placeholder="Hotel name or neighbourhood" autocomplete="off" oninput="hotelSearch(this.value)" />
+      <div id="hotel-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:0.5px solid var(--border);border-radius:10px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;margin-top:4px;"></div>
     </div>
     <div class="form-group">
       <label>Travel dates</label>
@@ -397,6 +399,69 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
       btn.innerHTML = 'Try again';
     }
   }
+  // City autocomplete
+  let cityTimer;
+  async function citySearch(val) {
+    clearTimeout(cityTimer);
+    const dd = document.getElementById('city-dropdown');
+    if (val.length < 2) { dd.style.display = 'none'; return; }
+    cityTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=6&language=en&format=json`);
+        const data = await res.json();
+        if (!data.results?.length) { dd.style.display = 'none'; return; }
+        dd.innerHTML = data.results.map(r => 
+          `<div onclick="selectCity('${r.name}, ${r.country}')" style="padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:0.5px solid var(--border);color:var(--text)" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background=''">
+            <span style="font-weight:500">${r.name}</span> <span style="color:var(--text-muted);font-size:12px">${r.admin1 ? r.admin1 + ', ' : ''}${r.country}</span>
+          </div>`
+        ).join('');
+        dd.style.display = 'block';
+      } catch(e) { dd.style.display = 'none'; }
+    }, 300);
+  }
+
+  function selectCity(val) {
+    document.getElementById('city').value = val;
+    document.getElementById('city-dropdown').style.display = 'none';
+    // Trigger hotel suggestions based on city
+    document.getElementById('hotel').placeholder = `Hotel or neighbourhood in ${val.split(',')[0]}`;
+    document.getElementById('hotel').focus();
+  }
+
+  // Hotel autocomplete — suggests neighbourhood types based on city
+  let hotelTimer;
+  async function hotelSearch(val) {
+    clearTimeout(hotelTimer);
+    const dd = document.getElementById('hotel-dropdown');
+    const city = document.getElementById('city').value.split(',')[0];
+    if (val.length < 2) { dd.style.display = 'none'; return; }
+    hotelTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val + ' ' + city)}&count=5&language=en&format=json`);
+        const data = await res.json();
+        if (!data.results?.length) { dd.style.display = 'none'; return; }
+        dd.innerHTML = data.results.map(r => 
+          `<div onclick="selectHotel('${r.name}')" style="padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:0.5px solid var(--border);color:var(--text)" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background=''">
+            <span style="font-weight:500">${r.name}</span> <span style="color:var(--text-muted);font-size:12px">${r.admin1 ? r.admin1 + ', ' : ''}${r.country}</span>
+          </div>`
+        ).join('');
+        dd.style.display = 'block';
+      } catch(e) { dd.style.display = 'none'; }
+    }, 300);
+  }
+
+  function selectHotel(val) {
+    document.getElementById('hotel').value = val;
+    document.getElementById('hotel-dropdown').style.display = 'none';
+  }
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#city-dropdown') && e.target.id !== 'city') 
+      document.getElementById('city-dropdown').style.display = 'none';
+    if (!e.target.closest('#hotel-dropdown') && e.target.id !== 'hotel') 
+      document.getElementById('hotel-dropdown').style.display = 'none';
+  });
   // Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
