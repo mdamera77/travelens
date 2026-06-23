@@ -20,49 +20,53 @@ export default async function handler(req, res) {
     });
     if (response.ok) {
       const html = await response.text();
-      // Strip HTML tags and extract readable text
       pageContent = html
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
         .replace(/<[^>]+>/g, ' ')
         .replace(/\s+/g, ' ')
-        .substring(0, 4000);
+        .substring(0, 6000);
     }
   } catch(e) {
-    // Page fetch failed — use URL + city context only
     pageContent = '';
   }
 
-  // Detect source from URL
   const source = url.includes('guruwalk') ? 'GuruWalk' :
                  url.includes('freetour') ? 'FreeTour' :
                  url.includes('getyourguide') ? 'GetYourGuide' :
                  url.includes('freetoursbyfoot') ? 'FreeToursByFoot' :
                  url.includes('viator') ? 'Viator' : 'Tour Site';
 
-  const prompt = `You are a travel expert extracting tour information.
+  const prompt = `You are a travel expert extracting tour information from a webpage.
 
 Source: ${source}
 URL: ${url}
-City context: ${city || 'unknown'}
+City: ${city || 'unknown'}
 
-${pageContent ? `Page content extracted from the URL:
-${pageContent}` : `Could not fetch page content. Use your knowledge of ${source} tours in ${city} to extract realistic information.`}
+${pageContent ? `Page content:
+${pageContent}` : `Could not fetch page. Use your knowledge of ${source} tours in ${city}.`}
 
-Based on the above, extract the walking tour details and respond ONLY with valid JSON:
+Extract the walking tour details. 
+
+CRITICAL RULES for highlights/stops:
+1. Extract stops in the EXACT ORDER they appear on the page — do NOT reorder for walking efficiency
+2. Use the EXACT names as written on the page — do not paraphrase or rename
+3. The first stop listed on the page must be highlights[0]
+4. Include ALL stops mentioned, even minor ones
+5. The meeting point (if mentioned) should be highlights[0]
+
+Respond ONLY with valid JSON, no markdown:
 
 {
-  "title": "tour name",
+  "title": "exact tour name from page",
   "source": "${source}",
-  "duration": "2.5 hours",
+  "duration": "X hours",
   "price": "Free (tips welcome)",
-  "meeting_point": "exact meeting point if mentioned",
-  "description": "2-3 sentence description of what this tour covers",
-  "highlights": ["Stop 1", "Stop 2", "Stop 3", "Stop 4", "Stop 5", "Stop 6", "Stop 7", "Stop 8"],
+  "meeting_point": "exact meeting point location if mentioned",
+  "description": "2-3 sentence description",
+  "highlights": ["First stop exactly as listed", "Second stop exactly as listed", "Third stop", "...all stops in page order"],
   "url": "${url}"
-}
-
-For highlights, extract the ACTUAL stops mentioned on the page in ORDER. If stops aren't explicitly listed but the tour area is clear, suggest the most logical stops for a walking tour of that area. Return at least 6 stops. No markdown, just JSON.`;
+}`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -74,7 +78,7 @@ For highlights, extract the ACTUAL stops mentioned on the page in ORDER. If stop
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 800,
+        max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
