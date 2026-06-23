@@ -71,7 +71,7 @@
     .hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; padding-left: 2px; }
     #greeting-screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 100dvh; padding: 40px 20px; }
     .download-bar { display: flex; gap: 10px; margin-bottom: 14px; }
-    .dl-btn { flex: 1; padding: 12px 8px; border: 0.5px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s; }
+    .dl-btn { flex: 1; padding: 12px 6px; border: 0.5px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; }
     .dl-btn:hover { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
     .dl-btn.copied { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
 
@@ -183,11 +183,15 @@
       <div class="download-bar" id="download-bar" style="display:none;">
         <button class="dl-btn" onclick="downloadPDF()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          Save as PDF
+          Save PDF
+        </button>
+        <button class="dl-btn" id="maps-btn" onclick="openMaps()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Maps route
         </button>
         <button class="dl-btn" id="copy-btn" onclick="copyTour()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy tour
+          Copy
         </button>
       </div>
 
@@ -289,6 +293,7 @@
   // Store raw tour text for copy
   let rawTourText = '';
   let currentCity = '';
+  let stopNames = [];
 
   // Download as PDF (uses browser print)
   function downloadPDF() {
@@ -313,7 +318,24 @@
     }
   }
 
-  function resetForm() {
+  // Open Google Maps with all stops as waypoints
+  function openMaps() {
+    if (!stopNames.length) return;
+    const city = currentCity.split(',')[0];
+    const waypoints = stopNames.map(s => encodeURIComponent(s + ', ' + city));
+    let url;
+    if (waypoints.length === 1) {
+      url = `https://www.google.com/maps/search/${waypoints[0]}`;
+    } else {
+      const origin = waypoints[0];
+      const destination = waypoints[waypoints.length - 1];
+      const middle = waypoints.slice(1, -1).join('/');
+      url = `https://www.google.com/maps/dir/${origin}${middle ? '/' + middle : ''}/${destination}`;
+    }
+    window.open(url, '_blank');
+  }
+
+
     document.getElementById('form-section').style.display = 'block';
     document.getElementById('output-section').classList.remove('visible');
     document.getElementById('output-content').innerHTML = '';
@@ -323,6 +345,7 @@
     document.getElementById('hotel').value = '';
     document.getElementById('dates').value = '';
     rawTourText = '';
+    stopNames = [];
     const btn = document.getElementById('gen-btn');
     btn.disabled = false;
     btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg> Build my tour';
@@ -332,6 +355,7 @@
   function renderOutput(text, city) {
     rawTourText = text;
     currentCity = city;
+    stopNames = [];
     const content = document.getElementById('output-content');
     content.innerHTML = '';
 
@@ -358,6 +382,7 @@
         currentStop.className = 'stop-card';
         const match = l.match(/STOP\s*(\d+)[:\-\s]+(.+?)(?:\s*\|\s*(.+))?$/i);
         if (match) {
+          stopNames.push(match[2].trim());
           const sh = document.createElement('div');
           sh.className = 'stop-header';
           sh.innerHTML = `<div class="stop-num">${match[1]}</div><div class="stop-name">${match[2].trim()}</div>${match[3] ? `<div class="stop-time">${match[3].trim()}</div>` : ''}`;
