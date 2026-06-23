@@ -238,6 +238,8 @@
 
   function resetForm() {
     document.getElementById('form-section').style.display = 'block';
+    document.getElementById('main-hero').style.display = 'block';
+    document.getElementById('form-section').style.display = 'block';
     document.getElementById('output-section').classList.remove('visible');
     document.getElementById('output-content').innerHTML = '';
     document.getElementById('progress-fill').style.width = '0%';
@@ -478,6 +480,7 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
       // Returning user
       document.getElementById('greeting-screen').style.display = 'none';
       document.getElementById('main-hero').style.display = 'block';
+      document.getElementById('form-section').style.display = 'block';
       const greeting = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
       document.getElementById('return-greeting').textContent = greeting(name);
     }
@@ -489,6 +492,7 @@ Tidbits must be genuinely surprising — specific, human, unexpected. Make peopl
     localStorage.setItem('travelens_name', name);
     document.getElementById('greeting-screen').style.display = 'none';
     document.getElementById('main-hero').style.display = 'block';
+    document.getElementById('form-section').style.display = 'block';
     const greeting = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
     document.getElementById('return-greeting').textContent = greeting(name);
   }
