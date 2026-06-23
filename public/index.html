@@ -86,6 +86,32 @@
     .audio-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .audio-progress { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
     .audio-progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+    /* Tour browse screen */
+    #browse-section { display: none; }
+    .browse-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .browse-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+    .source-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; }
+    .source-guruwalk { background: #FFF0E0; color: #C85A00; }
+    .source-freetour { background: #E0F0FF; color: #0060C8; }
+    .source-getyourguide { background: #FFF0E0; color: #CC0000; }
+    .source-foot { background: #E8F5E9; color: #2E7D32; }
+    .source-ai { background: var(--green-light); color: var(--green-dark); }
+    .tour-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; }
+    .tour-card:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(29,158,117,0.12); }
+    .tour-card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .tour-card-meta { display: flex; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+    .tour-meta-item { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .tour-card-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+    .tour-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 0.5px solid var(--border); }
+    .tour-card-link { font-size: 12px; color: var(--green); text-decoration: none; }
+    .select-btn { font-size: 12px; font-weight: 600; color: var(--green-dark); background: var(--green-light); border: none; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+    .or-divider { text-align: center; font-size: 12px; color: var(--text-muted); margin: 16px 0; display: flex; align-items: center; gap: 10px; }
+    .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+    .skip-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; }
+    .loading-tours { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 14px; }
+    .loading-tours .spinner { margin: 0 auto 12px; width: 24px; height: 24px; border-color: rgba(29,158,117,0.3); border-top-color: var(--green); }
+    .back-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0 0 12px; display: flex; align-items: center; gap: 5px; font-size: 13px; font-family: inherit; }
+
     @media print {
       body { background: white; color: #1a1a1a; }
       .app { max-width: 100%; padding: 0; }
@@ -171,10 +197,28 @@
         </div>
       </div>
 
-      <button class="btn" id="gen-btn" onclick="generateTour()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-        Build my tour
+      <button class="btn" id="gen-btn" onclick="findTours()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Find tours
       </button>
+    </div><!-- end form-section -->
+
+    <!-- Browse Tours Screen -->
+    <div id="browse-section">
+      <button class="back-btn" onclick="showForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="browse-title" id="browse-title">Tours in Prague</div>
+      <div class="browse-subtitle">Real tours from GuruWalk, FreeTour & more — pick one and we'll build your guide</div>
+      <div id="tour-cards-container">
+        <div class="loading-tours">
+          <div class="spinner"></div>
+          Finding real tours for you...
+        </div>
+      </div>
+      <div class="or-divider">or</div>
+      <button class="skip-btn" onclick="skipToAI()">✨ Build me an AI tour instead</button>
     </div>
 
     <!-- Output -->
@@ -378,6 +422,7 @@
     audioPlaying = false;
     audioSegments = [];
     document.getElementById('audio-bar').classList.remove('visible');
+    document.getElementById('browse-section').style.display = 'none';
     document.getElementById('form-section').style.display = 'block';
     document.getElementById('output-section').classList.remove('visible');
     document.getElementById('output-content').innerHTML = '';
@@ -390,7 +435,7 @@
     stopNames = [];
     const btn = document.getElementById('gen-btn');
     btn.disabled = false;
-    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg> Build my tour';
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Find tours';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -473,7 +518,7 @@
     document.getElementById('download-bar').style.display = 'flex';
   }
 
-  async function generateTour() {
+  async function generateTour(tourContext) {
     const city = document.getElementById('city').value.trim();
     const hotel = document.getElementById('hotel').value.trim();
     const dates = document.getElementById('dates').value.trim();
@@ -494,7 +539,7 @@
       const res = await fetch('/api/tour', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city, hotel, dates, vibes, stamina })
+        body: JSON.stringify({ city, hotel, dates, vibes, stamina, tourContext: tourContext || null })
       });
       const data = await res.json();
       clearInterval(ticker);
@@ -510,7 +555,95 @@
     }
   }
 
-  // ── AUDIO GUIDE ENGINE ──────────────────────────────────────────
+  // ── TOUR BROWSING ─────────────────────────────────────────────
+  let selectedTourContext = null;
+
+  function showForm() {
+    document.getElementById('form-section').style.display = 'block';
+    document.getElementById('browse-section').style.display = 'none';
+  }
+
+  function skipToAI() {
+    document.getElementById('browse-section').style.display = 'none';
+    generateTour(null);
+  }
+
+  async function findTours() {
+    const city = document.getElementById('city').value.trim();
+    if (!city) { document.getElementById('city').focus(); return; }
+
+    const cityName = city.split(',')[0];
+    document.getElementById('browse-title').textContent = `Tours in ${cityName}`;
+    document.getElementById('form-section').style.display = 'none';
+    document.getElementById('browse-section').style.display = 'block';
+    document.getElementById('tour-cards-container').innerHTML = `
+      <div class="loading-tours">
+        <div class="spinner"></div>
+        Searching GuruWalk, FreeTour & more for ${cityName}...
+      </div>`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    try {
+      const res = await fetch('/api/tours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: cityName })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      renderTourCards(data.tours, cityName);
+    } catch(err) {
+      document.getElementById('tour-cards-container').innerHTML = `
+        <div class="error-box">Could not find tours. Try the AI tour below.</div>`;
+    }
+  }
+
+  function renderTourCards(tours, city) {
+    const container = document.getElementById('tour-cards-container');
+    if (!tours?.length) {
+      container.innerHTML = `<div class="error-box">No tours found for ${city}. Try the AI tour below!</div>`;
+      return;
+    }
+
+    const sourceClass = {
+      'GuruWalk': 'source-guruwalk',
+      'FreeTour': 'source-freetour',
+      'GetYourGuide': 'source-getyourguide',
+      'FreeToursByFoot': 'source-foot',
+      'AI': 'source-ai'
+    };
+
+    container.innerHTML = tours.map((t, i) => `
+      <div class="tour-card" onclick="selectTour(${i})">
+        <span class="source-badge ${sourceClass[t.source] || 'source-ai'}">${t.source}</span>
+        <div class="tour-card-title">${t.title}</div>
+        <div class="tour-card-meta">
+          ${t.duration ? `<div class="tour-meta-item">⏱ ${t.duration}</div>` : ''}
+          ${t.price ? `<div class="tour-meta-item">💰 ${t.price}</div>` : ''}
+          ${t.rating ? `<div class="tour-meta-item">⭐ ${t.rating}</div>` : ''}
+          ${t.highlights?.length ? `<div class="tour-meta-item">📍 ${t.highlights.length} stops</div>` : ''}
+        </div>
+        <div class="tour-card-desc">${t.description}</div>
+        <div class="tour-card-footer">
+          ${t.url ? `<a class="tour-card-link" href="${t.url}" target="_blank" onclick="event.stopPropagation()">View on ${t.source} →</a>` : '<span></span>'}
+          <button class="select-btn">Build guide →</button>
+        </div>
+      </div>
+    `).join('');
+
+    // Store tours for selection
+    window._foundTours = tours;
+  }
+
+  function selectTour(index) {
+    const tour = window._foundTours[index];
+    selectedTourContext = tour;
+    document.getElementById('browse-section').style.display = 'none';
+    generateTour(tour);
+  }
+  // ── END TOUR BROWSING ─────────────────────────────────────────
+
+
   let audioSegments = [];
   let audioIndex = 0;
   let audioPlaying = false;
