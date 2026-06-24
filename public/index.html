@@ -407,6 +407,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
           Save
         </button>
+        <button class="dl-btn" id="share-btn" onclick="shareTour()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
       </div>
       <div class="audio-bar" id="audio-bar">
         <div class="audio-title">
@@ -1108,10 +1112,108 @@
   }
   // ── END MY TOURS ──────────────────────────────────────────────────
 
+  // ── SHARE TOUR ───────────────────────────────────────────────────
+  async function shareTour() {
+    if (!rawTourText || !currentCity) return;
+
+    const payload = {
+      city: currentCity,
+      text: rawTourText,
+      stops: stopNames,
+      source: selectedTourContext?.source || 'AI Tour',
+      title: selectedTourContext?.title || `${currentCity} Walking Tour`
+    };
+
+    try {
+      // Compress to base64
+      const json = JSON.stringify(payload);
+      const encoded = btoa(unescape(encodeURIComponent(json)));
+      const shareURL = `${window.location.origin}/?tour=${encoded}`;
+
+      // Try native share first (works great on iPhone)
+      if (navigator.share) {
+        await navigator.share({
+          title: `${currentCity} Walking Tour — Travelens`,
+          text: `Check out this walking tour I built for ${currentCity}! 🗺️`,
+          url: shareURL
+        });
+        return;
+      }
+
+      // Fallback — copy to clipboard
+      await navigator.clipboard.writeText(shareURL);
+      const btn = document.getElementById('share-btn');
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share`;
+      }, 2500);
+      showToast('Link copied! Paste it to share 📤');
+
+    } catch(e) {
+      showToast('Could not copy link');
+    }
+  }
+
+  // Load a shared tour from URL on page load
+  function checkSharedTour() {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('tour');
+    if (!encoded) return false;
+
+    try {
+      const json = decodeURIComponent(escape(atob(encoded)));
+      const tour = JSON.parse(json);
+      if (!tour.city || !tour.text) return false;
+
+      // Set globals
+      rawTourText = tour.text;
+      currentCity = tour.city;
+      stopNames = tour.stops || [];
+      selectedTourContext = { source: tour.source, title: tour.title };
+
+      // Show shared tour banner + render
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:var(--green-light);border:0.5px solid var(--green);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--green-dark);display:flex;align-items:center;justify-content:space-between;gap:10px;';
+      banner.innerHTML = `
+        <span>🗺️ <strong>${tour.title || tour.city + ' tour'}</strong> shared with you</span>
+        <button onclick="saveTour();this.textContent='Saved ✓';this.disabled=true;" style="background:var(--green);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">Save to My Tours</button>
+      `;
+
+      // Show main app, render tour
+      document.getElementById('greeting-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+      const outputSection = document.getElementById('output-section');
+      outputSection.classList.add('visible');
+
+      // Insert banner before output content
+      const outputContent = document.getElementById('output-content');
+      outputContent.innerHTML = '';
+      outputSection.insertBefore(banner, outputContent);
+
+      renderOutput(tour.text, tour.city, tour.stops || []);
+      document.getElementById('download-bar').style.display = 'flex';
+      updateToursCount();
+
+      // Clean URL so refresh doesn't re-trigger
+      window.history.replaceState({}, '', window.location.pathname);
+      return true;
+
+    } catch(e) {
+      return false;
+    }
+  }
+  // ── END SHARE TOUR ────────────────────────────────────────────────
+
   // ── INIT ─────────────────────────────────────────────────────────
   window.addEventListener('load', () => {
-    initGreeting();
     updateToursCount();
+    // Check for shared tour in URL first — if found, skip greeting
+    if (!checkSharedTour()) {
+      initGreeting();
+    }
   });
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }
 </script>
