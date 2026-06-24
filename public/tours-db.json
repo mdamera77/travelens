@@ -1,0 +1,511 @@
+{
+  "generated": "2026-06-23T00:00:00Z",
+  "cities": {
+    "Prague": {
+      "lastUpdated": "2026-06-23T00:00:00Z",
+      "tours": [
+        {
+          "city": "Prague",
+          "cityLat": 50.0755,
+          "cityLng": 14.4378,
+          "title": "The Original Free Tour of Prague",
+          "source": "FreeTour",
+          "sourceColor": "#2196F3",
+          "duration": "2.5 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.9",
+          "reviews": "312",
+          "meeting_point": "Old Town Square, near the Jan Hus Monument, Prague 1",
+          "description": "The most popular walking tour in Prague covering Old Town, the Jewish Quarter, and Charles Bridge. Your guide brings centuries of history to life with stories you won't find in any guidebook.",
+          "highlights": [
+            "Old Town Square & Astronomical Clock",
+            "View of Charles Bridge",
+            "House of the Black Madonna & Museum of Cubism",
+            "Church of Our Lady before Týn",
+            "View of Prague Castle",
+            "Rudolfinum – Czech Philharmonic",
+            "Old New Synagogue & the Golem",
+            "Art Nouveau Municipal House",
+            "St. Nicolas' Church",
+            "Old Jewish Quarter",
+            "Wenceslas Square",
+            "Statue of Jan Hus",
+            "Powder Tower"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "jewish-quarter"
+          ],
+          "url": "https://www.freetour.com/prague/the-original-free-tour-of-prague"
+        },
+        {
+          "city": "Prague",
+          "cityLat": 50.0755,
+          "cityLng": 14.4378,
+          "title": "Discover Prague's Old Town, Lesser Town, Jewish Quarter and Charles Bridge",
+          "source": "GuruWalk",
+          "sourceColor": "#FF6B35",
+          "duration": "3 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.9",
+          "reviews": "189",
+          "meeting_point": "Malostranská Metro Station Exit, Malá Strana, Prague",
+          "description": "Start in Lesser Town and wind through hidden baroque courtyards, cross Charles Bridge at its most photogenic, and discover the Jewish Quarter's extraordinary story of survival.",
+          "highlights": [
+            "Malostranská Metro Station",
+            "Lesser Town (Malá Strana)",
+            "Urinating Sculptures by David Černý",
+            "Kampa Island (Little Venice)",
+            "John Lennon Wall",
+            "Charles Bridge & Nepomuk Statue",
+            "Klementinum",
+            "Old Town Square",
+            "Prague Astronomical Clock",
+            "Church of Our Lady before Týn",
+            "Staroměstská Radnice",
+            "Spanish Synagogue",
+            "Kafka Monument",
+            "Pařížská Street",
+            "Old New Synagogue",
+            "Rudolfinum"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "art",
+            "jewish-quarter"
+          ],
+          "url": "https://www.guruwalk.com/walks/58764-discover-prague-s-old-town-lesser-town-jewish-quarter-and-charles-bridge"
+        },
+        {
+          "city": "Prague",
+          "cityLat": 50.0755,
+          "cityLng": 14.4378,
+          "title": "Prague Castle & Malá Strana Hidden Gems",
+          "source": "FreeToursByFoot",
+          "sourceColor": "#4CAF50",
+          "duration": "2.5 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.8",
+          "reviews": "143",
+          "meeting_point": "Hradčanské náměstí (Castle Square), in front of the Archbishop's Palace, Prague 1",
+          "description": "Explore Prague Castle — the largest ancient castle complex in the world — and descend through the baroque splendour of Malá Strana to the riverside, with stops at hidden gardens and local secrets.",
+          "highlights": [
+            "Hradčanské náměstí",
+            "Prague Castle Main Gate",
+            "St. Vitus Cathedral",
+            "Old Royal Palace & Vladislav Hall",
+            "St. George's Basilica",
+            "Golden Lane",
+            "Black Tower",
+            "Wallenstein Garden",
+            "Malostranské náměstí",
+            "St. Nicholas Church",
+            "Nerudova Street",
+            "Kampa Island"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "royal",
+            "hidden-gems"
+          ],
+          "url": "https://www.freetoursbyfoot.com/prague-tours/"
+        },
+        {
+          "city": "Prague",
+          "cityLat": 50.0755,
+          "cityLng": 14.4378,
+          "title": "Communist Prague & Cold War History Tour",
+          "source": "GuruWalk",
+          "sourceColor": "#FF6B35",
+          "duration": "2 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.8",
+          "reviews": "97",
+          "meeting_point": "Wenceslas Square, top of the square near the National Museum, Prague 1",
+          "description": "Uncover the darker chapters of Prague's 20th century — secret police headquarters, Soviet propaganda, the 1968 invasion, and the Velvet Revolution of 1989 that changed everything.",
+          "highlights": [
+            "Wenceslas Square",
+            "Jan Palach Memorial",
+            "National Museum",
+            "Former Secret Police (StB) Headquarters",
+            "Lucerna Passage & Upside-Down Horse",
+            "Na Příkopě Street",
+            "Old Town Square Execution Crosses",
+            "Clam-Gallas Palace",
+            "Bethlehem Chapel",
+            "Velvet Revolution Memorial"
+          ],
+          "themes": [
+            "history",
+            "dark-history",
+            "communism"
+          ],
+          "url": "https://www.guruwalk.com/walks/prague-communism"
+        },
+        {
+          "city": "Prague",
+          "cityLat": 50.0755,
+          "cityLng": 14.4378,
+          "title": "Prague Food & Market Tour",
+          "source": "GetYourGuide",
+          "sourceColor": "#FF5722",
+          "duration": "3 hours",
+          "price": "From $29",
+          "rating": "4.7",
+          "reviews": "201",
+          "meeting_point": "Jiřího z Poděbrad Metro Station Exit, Vinohrady, Prague 2",
+          "description": "Skip the tourist traps and eat where Praguers actually eat. Visit the Vinohrady farmers market, try svíčková, trdelník, and Czech craft beer at a neighbourhood pub that's been open since 1887.",
+          "highlights": [
+            "Jiřího z Poděbrad Farmers Market",
+            "Vinohrady Neighbourhood",
+            "Havlíčkovy Sady Vineyard",
+            "Náplavka Riverside Market",
+            "Traditional Czech Butcher",
+            "Local Bakery Tasting",
+            "Neighbourhood Pivnice (Pub)",
+            "Žižkov TV Tower",
+            "Manifesto Market"
+          ],
+          "themes": [
+            "food",
+            "hidden-gems"
+          ],
+          "url": "https://www.getyourguide.com/prague-l10/food-tour"
+        }
+      ]
+    },
+    "Vienna": {
+      "lastUpdated": "2026-06-23T00:00:00Z",
+      "tours": [
+        {
+          "city": "Vienna",
+          "cityLat": 48.2082,
+          "cityLng": 16.3738,
+          "title": "The Original Free Tour of Vienna",
+          "source": "FreeTour",
+          "sourceColor": "#2196F3",
+          "duration": "2.5 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.9",
+          "reviews": "287",
+          "meeting_point": "Albertinaplatz, in front of the Albertina Museum (Mozart statue), Vienna 1st district",
+          "description": "Vienna's most popular walking tour covering the Imperial Quarter, the Ring Road, and the hidden courtyards of the 1st district. Your guide reveals the Habsburg family's extraordinary secrets.",
+          "highlights": [
+            "Albertinaplatz & Mozart Statue",
+            "Vienna State Opera",
+            "Naschmarkt entrance",
+            "St. Stephen's Cathedral (Stephansdom)",
+            "Graben Pedestrian Street",
+            "Plague Column (Pestsäule)",
+            "Hofburg Imperial Palace",
+            "Spanish Riding School",
+            "Austrian National Library",
+            "Augustinerkirche",
+            "Josefsplatz",
+            "Burggarten & Mozart Monument"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "royal"
+          ],
+          "url": "https://www.freetour.com/vienna/the-original-free-tour-of-vienna"
+        },
+        {
+          "city": "Vienna",
+          "cityLat": 48.2082,
+          "cityLng": 16.3738,
+          "title": "Vienna Imperial Highlights & Hidden Courtyards",
+          "source": "GuruWalk",
+          "sourceColor": "#FF6B35",
+          "duration": "3 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.8",
+          "reviews": "156",
+          "meeting_point": "Stephansplatz, at the entrance of St. Stephen's Cathedral, Vienna",
+          "description": "Go beyond the tourist trail and discover Vienna's hidden Durchhäuser — secret passageways connecting inner courtyards that locals use as shortcuts but tourists never find.",
+          "highlights": [
+            "St. Stephen's Cathedral",
+            "Haas Haus",
+            "Graben",
+            "Kohlmarkt",
+            "Michaelerplatz",
+            "Hofburg Palace",
+            "Hidden Durchhaus Passage",
+            "Am Hof Square",
+            "Freyung",
+            "Schottenkirche",
+            "Votivkirche",
+            "Ringstrasse"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "hidden-gems",
+            "royal"
+          ],
+          "url": "https://www.guruwalk.com/walks/vienna-imperial"
+        },
+        {
+          "city": "Vienna",
+          "cityLat": 48.2082,
+          "cityLng": 16.3738,
+          "title": "Vienna Jewish Quarter & Holocaust Memorial Tour",
+          "source": "FreeToursByFoot",
+          "sourceColor": "#4CAF50",
+          "duration": "2 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.8",
+          "reviews": "88",
+          "meeting_point": "Judenplatz, in front of the Holocaust Memorial, Vienna 1st district",
+          "description": "A moving and essential tour of Vienna's Jewish Quarter, from medieval history to the Holocaust Memorial designed by Rachel Whiteread, and the remarkable story of the community's resilience.",
+          "highlights": [
+            "Judenplatz Holocaust Memorial",
+            "Museum Judenplatz",
+            "Medieval Synagogue Ruins",
+            "Wipplingerstrasse",
+            "Altes Rathaus",
+            "Am Hof Square",
+            "Jordangasse",
+            "Ruprechtskirche",
+            "Morzinplatz Gestapo Memorial",
+            "Schwedenplatz"
+          ],
+          "themes": [
+            "history",
+            "jewish-quarter",
+            "dark-history"
+          ],
+          "url": "https://www.freetoursbyfoot.com/vienna-tours/"
+        },
+        {
+          "city": "Vienna",
+          "cityLat": 48.2082,
+          "cityLng": 16.3738,
+          "title": "Vienna Food & Coffee House Culture Tour",
+          "source": "GetYourGuide",
+          "sourceColor": "#FF5722",
+          "duration": "3.5 hours",
+          "price": "From $45",
+          "rating": "4.9",
+          "reviews": "334",
+          "meeting_point": "Naschmarkt, Main Entrance at Linke Wienzeile, Vienna 6th district",
+          "description": "Vienna's café culture is UNESCO-listed — this tour takes you inside historic Kaffeehäuser that have barely changed since 1900, plus the Naschmarkt and the city's best pastry shops.",
+          "highlights": [
+            "Naschmarkt",
+            "Café Schwarzenberg (1861)",
+            "Karlskirche",
+            "Karlsplatz",
+            "Operngasse",
+            "Café Imperial",
+            "Kärntner Strasse",
+            "Demel K.u.K. Court Confectionery",
+            "Kohlmarkt",
+            "Café Central (1876)",
+            "Herrengasse"
+          ],
+          "themes": [
+            "food",
+            "history",
+            "art"
+          ],
+          "url": "https://www.getyourguide.com/vienna-l17/food-coffee-tour"
+        },
+        {
+          "city": "Vienna",
+          "cityLat": 48.2082,
+          "cityLng": 16.3738,
+          "title": "Vienna After Dark — Crime, Scandal & Secrets",
+          "source": "GuruWalk",
+          "sourceColor": "#FF6B35",
+          "duration": "2 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.7",
+          "reviews": "112",
+          "meeting_point": "Stephansplatz U-Bahn Exit, beside St. Stephen's Cathedral, Vienna",
+          "description": "Vienna's elegant surface conceals extraordinary darkness — royal scandals, infamous murders, suicide pacts, and the secrets the Habsburg court tried hardest to bury. Best experienced at dusk.",
+          "highlights": [
+            "St. Stephen's Catacombs",
+            "Graben (Plague site)",
+            "Kohlmarkt Murder Site 1927",
+            "Hofburg — Crown Prince Rudolf's Rooms",
+            "Augustinerkirche Heart Tombs",
+            "Michaelerplatz Roman Ruins",
+            "Looshaus",
+            "Imperial Crypt Entrance"
+          ],
+          "themes": [
+            "dark-history",
+            "history"
+          ],
+          "url": "https://www.guruwalk.com/walks/vienna-dark-secrets"
+        }
+      ]
+    },
+    "Budapest": {
+      "lastUpdated": "2026-06-23T00:00:00Z",
+      "tours": [
+        {
+          "city": "Budapest",
+          "cityLat": 47.4979,
+          "cityLng": 19.0402,
+          "title": "The Original Free Tour of Budapest",
+          "source": "FreeTour",
+          "sourceColor": "#2196F3",
+          "duration": "3 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.9",
+          "reviews": "423",
+          "meeting_point": "Vörösmarty Square (Vörösmarty tér), in front of Gerbeaud Café, Budapest",
+          "description": "Budapest's most popular walking tour covering both Pest and the Castle District, crossing the iconic Chain Bridge and revealing the extraordinary story of this city that was destroyed and rebuilt three times in the 20th century.",
+          "highlights": [
+            "Vörösmarty Square & Gerbeaud",
+            "Deák Ferenc Street",
+            "St. Stephen's Basilica",
+            "Hungarian Parliament (exterior)",
+            "Chain Bridge",
+            "Castle Hill Funicular",
+            "Buda Castle",
+            "Matthias Church",
+            "Fisherman's Bastion",
+            "Holy Trinity Square",
+            "Views over Pest & Danube"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "royal"
+          ],
+          "url": "https://www.freetour.com/budapest/the-original-free-tour-of-budapest"
+        },
+        {
+          "city": "Budapest",
+          "cityLat": 47.4979,
+          "cityLng": 19.0402,
+          "title": "Budapest Jewish Quarter & Ruin Bar Tour",
+          "source": "GuruWalk",
+          "sourceColor": "#FF6B35",
+          "duration": "2.5 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.9",
+          "reviews": "201",
+          "meeting_point": "Dohány Street Synagogue Main Entrance, Dohány utca 2, Budapest VII",
+          "description": "Explore Budapest's legendary Jewish Quarter — home to Europe's largest synagogue, haunting WWII memorials, and the extraordinary ruin bars that turned derelict buildings into the city's most iconic nightlife.",
+          "highlights": [
+            "Dohány Street Synagogue",
+            "Jewish Museum",
+            "Raoul Wallenberg Memorial Park",
+            "Tree of Life Sculpture",
+            "Kazinczy Street Synagogue",
+            "Rumbach Synagogue",
+            "Gozsdu Courtyard",
+            "Szimpla Kert Ruin Bar",
+            "Kazinczy Street",
+            "Klauzál Square & Market Hall"
+          ],
+          "themes": [
+            "history",
+            "jewish-quarter",
+            "art",
+            "hidden-gems"
+          ],
+          "url": "https://www.guruwalk.com/walks/budapest-jewish-quarter"
+        },
+        {
+          "city": "Budapest",
+          "cityLat": 47.4979,
+          "cityLng": 19.0402,
+          "title": "Budapest Communist History & Cold War Tour",
+          "source": "FreeToursByFoot",
+          "sourceColor": "#4CAF50",
+          "duration": "2.5 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.8",
+          "reviews": "134",
+          "meeting_point": "Oktogon Square (Oktogon tér), at the corner of Andrássy út, Budapest VI",
+          "description": "Walk the avenue where secret police tortured prisoners beneath your feet, see where Stalin's giant statue once stood, and hear the extraordinary story of the 1956 Hungarian Revolution that shook the Soviet empire.",
+          "highlights": [
+            "Oktogon Square",
+            "Andrássy Avenue (UNESCO)",
+            "House of Terror Museum (exterior)",
+            "Former ÁVH Secret Police HQ",
+            "Soviet-era Housing Blocks",
+            "Heroes' Square",
+            "Városliget Park",
+            "Stalin's Plinth (where statue fell 1956)",
+            "City Park"
+          ],
+          "themes": [
+            "history",
+            "dark-history",
+            "communism"
+          ],
+          "url": "https://www.freetoursbyfoot.com/budapest-tours/"
+        },
+        {
+          "city": "Budapest",
+          "cityLat": 47.4979,
+          "cityLng": 19.0402,
+          "title": "Budapest Thermal Baths & Hidden Gems",
+          "source": "GetYourGuide",
+          "sourceColor": "#FF5722",
+          "duration": "2 hours",
+          "price": "From $18",
+          "rating": "4.7",
+          "reviews": "167",
+          "meeting_point": "Széchenyi Thermal Bath Main Entrance, Állatkerti körút 9-11, Budapest XIV",
+          "description": "Budapest sits on 120 natural hot springs — this tour reveals the history and culture of the city's thermal bath tradition, from Ottoman origins to the magnificent Art Nouveau palaces of water.",
+          "highlights": [
+            "Széchenyi Thermal Bath",
+            "Városliget (City Park)",
+            "Vajdahunyad Castle",
+            "Millennium Monument",
+            "Andrássy Avenue",
+            "Lukács Bath (exterior)",
+            "Király Bath (exterior)",
+            "Veli Bej Ottoman Bath"
+          ],
+          "themes": [
+            "history",
+            "architecture",
+            "hidden-gems"
+          ],
+          "url": "https://www.getyourguide.com/budapest-l26/thermal-baths-tour"
+        },
+        {
+          "city": "Budapest",
+          "cityLat": 47.4979,
+          "cityLng": 19.0402,
+          "title": "Budapest Market & Street Food Tour",
+          "source": "GuruWalk",
+          "sourceColor": "#FF6B35",
+          "duration": "3 hours",
+          "price": "Free (tips welcome)",
+          "rating": "4.8",
+          "reviews": "89",
+          "meeting_point": "Great Market Hall (Nagy Vásárcsarnok) Main Entrance, Vámház körút 1-3, Budapest IX",
+          "description": "Budapest's food scene is one of Central Europe's most underrated. This tour covers the Great Market Hall, the Hungarian food obsession with paprika, lángos, kürtőskalács, and the city's best street food spots.",
+          "highlights": [
+            "Great Market Hall",
+            "Fővám Square",
+            "Liberty Bridge",
+            "Belvárosi Market",
+            "Karavan Street Food Court",
+            "Jewish Quarter Restaurants",
+            "Szimpla Farmers Market (weekends)",
+            "Gozsdu Courtyard Food Stalls"
+          ],
+          "themes": [
+            "food",
+            "history",
+            "hidden-gems"
+          ],
+          "url": "https://www.guruwalk.com/walks/budapest-food-tour"
+        }
+      ]
+    }
+  }
+}
