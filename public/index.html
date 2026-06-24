@@ -1116,18 +1116,23 @@
   async function shareTour() {
     if (!rawTourText || !currentCity) return;
 
-    const payload = {
-      city: currentCity,
-      text: rawTourText,
-      stops: stopNames,
-      source: selectedTourContext?.source || 'AI Tour',
-      title: selectedTourContext?.title || `${currentCity} Walking Tour`
-    };
-
     try {
+      // Only share essential data — stops + city + source (not full text)
+      // Full text is too large; we'll regenerate from stops when cousin opens it
+      const payload = {
+        city: currentCity,
+        stops: stopNames,
+        source: selectedTourContext?.source || 'AI Tour',
+        title: selectedTourContext?.title || `${currentCity} Walking Tour`,
+        // Include first 800 chars of text as preview
+        preview: rawTourText.substring(0, 800)
+      };
+
       const json = JSON.stringify(payload);
-      const encoded = btoa(unescape(encodeURIComponent(json)));
-      const shareURL = `${window.location.origin}/?tour=${encoded}`;
+      // Use TextEncoder for safe encoding of all unicode characters
+      const encoded = btoa(Array.from(new TextEncoder().encode(json))
+        .map(b => String.fromCharCode(b)).join(''));
+      const shareURL = `${window.location.origin}/?tour=${encodeURIComponent(encoded)}`;
 
       // Try native share first (iPhone share sheet)
       if (navigator.share) {
@@ -1150,14 +1155,15 @@
           btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share`;
         }, 2500);
         showToast('Link copied! Paste it to share 📤');
-        return;
       } catch(clipErr) {
-        // Clipboard failed — show modal with link to copy manually
         showShareModal(shareURL);
       }
 
     } catch(e) {
-      showToast('Could not generate share link');
+      console.error('Share error:', e);
+      // Last resort — show modal with just the city and stops info
+      showShareModal(window.location.origin + '/?city=' + encodeURIComponent(currentCity));
+      showToast('Tip: share the link below with your tour city');
     }
   }
 
@@ -1216,47 +1222,52 @@
     if (!encoded) return false;
 
     try {
-      const json = decodeURIComponent(escape(atob(encoded)));
-      const tour = JSON.parse(json);
-      if (!tour.city || !tour.text) return false;
+      // Decode safely
+      const bytes = Uint8Array.from(atob(decodeURIComponent(encoded)), c => c.charCodeAt(0));
+      const json = new TextDecoder().decode(bytes);
+      const payload = JSON.parse(json);
+      if (!payload.city) return false;
 
       // Set globals
-      rawTourText = tour.text;
-      currentCity = tour.city;
-      stopNames = tour.stops || [];
-      selectedTourContext = { source: tour.source, title: tour.title };
+      currentCity = payload.city;
+      stopNames = payload.stops || [];
+      selectedTourContext = { source: payload.source, title: payload.title, highlights: payload.stops };
 
-      // Show shared tour banner + render
-      const banner = document.createElement('div');
-      banner.style.cssText = 'background:var(--green-light);border:0.5px solid var(--green);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--green-dark);display:flex;align-items:center;justify-content:space-between;gap:10px;';
-      banner.innerHTML = `
-        <span>🗺️ <strong>${tour.title || tour.city + ' tour'}</strong> shared with you</span>
-        <button onclick="saveTour();this.textContent='Saved ✓';this.disabled=true;" style="background:var(--green);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;">Save to My Tours</button>
-      `;
-
-      // Show main app, render tour
+      // Show main app
       document.getElementById('greeting-screen').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
       [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+
+      // Set city field so generateTour works
+      document.getElementById('city').value = payload.city;
+
+      // Show a welcome screen prompting to generate
       const outputSection = document.getElementById('output-section');
       outputSection.classList.add('visible');
-
-      // Insert banner before output content
       const outputContent = document.getElementById('output-content');
-      outputContent.innerHTML = '';
-      outputSection.insertBefore(banner, outputContent);
+      outputContent.innerHTML = `
+        <div style="background:var(--green-light);border:0.5px solid var(--green);border-radius:12px;padding:20px;margin-bottom:14px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:8px;">🗺️</div>
+          <div style="font-size:16px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">${payload.title || payload.city + ' Walking Tour'}</div>
+          <div style="font-size:12px;color:var(--green-dark);margin-bottom:4px;">Shared via Travelens</div>
+          ${payload.stops?.length ? `<div style="font-size:11px;color:var(--green-dark);margin-bottom:16px;line-height:1.5;">📍 ${payload.stops.slice(0,5).join(' → ')}${payload.stops.length > 5 ? ' + ' + (payload.stops.length - 5) + ' more' : ''}</div>` : ''}
+          <button onclick="buildSharedTour()" style="width:100%;padding:13px;background:var(--green);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">
+            Build this tour for me →
+          </button>
+        </div>`;
 
-      renderOutput(tour.text, tour.city, tour.stops || []);
-      document.getElementById('download-bar').style.display = 'flex';
-      updateToursCount();
-
-      // Clean URL so refresh doesn't re-trigger
       window.history.replaceState({}, '', window.location.pathname);
+      updateToursCount();
       return true;
 
     } catch(e) {
+      console.error('Share decode error:', e);
       return false;
     }
+  }
+
+  function buildSharedTour() {
+    generateTour(selectedTourContext);
   }
   // ── END SHARE TOUR ────────────────────────────────────────────────
 
