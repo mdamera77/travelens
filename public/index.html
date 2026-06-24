@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Travelens — GPS for the Wandering Soul</title>
-  <meta name="description" content="AI-powered personalised travel companion for any place in the world." />
+  <meta name="description" content="AI-powered personalised walking tours for any city in the world." />
   <meta name="theme-color" content="#1D9E75" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -148,7 +148,7 @@
     @media print {
       body { background: white; color: #1a1a1a; }
       .app { max-width: 100%; padding: 0; }
-      #greeting-screen, #step1, #step2, #step3a, #step3b, .reset-btn, .download-bar, .progress-bar, .audio-bar { display: none !important; }
+      #greeting-screen, #step1, #step2, #step3a, #step3b, .reset-btn, .download-bar, .progress-bar, .audio-bar, #my-tours-screen, .my-tours-trigger { display: none !important; }
       .output { display: block !important; }
       .stop-card { break-inside: avoid; border: 1px solid #ddd; border-left: 3px solid #1D9E75; }
       .tidbit { background: #FAEEDA; border-left: 2px solid #EF9F27; }
@@ -161,6 +161,25 @@
     .pdf-header .pdf-tagline { font-size: 12px; color: #666; margin-top: 4px; }
     .pdf-header .pdf-city { font-size: 20px; font-weight: 600; color: #1D9E75; margin-top: 12px; }
     .pdf-header .pdf-date { font-size: 12px; color: #666; margin-top: 4px; }
+
+    /* My Tours */
+    .my-tours-trigger { background: var(--green-light); border: 0.5px solid var(--green); color: var(--green-dark); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+    .tours-count { background: var(--green); color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; }
+    .saved-tour-card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
+    .saved-tour-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+    .saved-tour-city { font-size: 16px; font-weight: 700; color: var(--text); }
+    .saved-tour-delete { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px; font-size: 18px; line-height: 1; }
+    .saved-tour-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .saved-tour-stops { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .saved-tour-actions { display: flex; gap: 8px; }
+    .saved-action-btn { flex: 1; padding: 9px 6px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-family: inherit; transition: all 0.15s; }
+    .saved-action-btn.primary { background: var(--green); color: white; border-color: var(--green); }
+    .no-tours { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .no-tours-icon { font-size: 40px; margin-bottom: 12px; }
+    .no-tours-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .no-tours-sub { font-size: 13px; }
+    .save-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+    .save-toast.show { opacity: 1; }
 
     /* Greeting */
     #greeting-screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 100dvh; padding: 40px 20px; }
@@ -191,6 +210,10 @@
       </div>
       <div class="logo">Travel<span>ens</span></div>
       <div class="return-greeting" id="return-greeting"></div>
+      <button class="my-tours-trigger" id="my-tours-trigger" onclick="showMyTours()" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        My Tours <span id="tours-count" class="tours-count"></span>
+      </button>
     </div>
 
     <!-- STEP 1: City -->
@@ -380,6 +403,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy
         </button>
+        <button class="dl-btn" id="save-btn" onclick="saveTour()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save
+        </button>
       </div>
       <div class="audio-bar" id="audio-bar">
         <div class="audio-title">
@@ -402,6 +429,17 @@
       </div>
       <div id="output-content"></div>
       <button class="reset-btn" onclick="resetApp()">↩ Plan another tour</button>
+    </div>
+
+    <!-- MY TOURS SCREEN -->
+    <div id="my-tours-screen" style="display:none;">
+      <button class="back-btn" onclick="hideMyTours()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="mode-title">My Saved Tours</div>
+      <div class="mode-subtitle" id="my-tours-subtitle">Your tours saved on this device</div>
+      <div id="saved-tours-list"></div>
     </div>
 
   </div><!-- end main-app -->
@@ -632,6 +670,7 @@
       preview.className = 'tour-preview';
       preview.innerHTML = `
         <div class="tour-preview-title">✓ ${tour.title}</div>
+        ${tour.fetchBlocked ? `<div style="font-size:11px;color:#C85A00;background:#FFF0E0;padding:6px 10px;border-radius:6px;margin-bottom:8px;">⚠️ This site blocked automatic reading — stops below are AI-inferred from the tour URL. Verify on ${source} if needed.</div>` : ''}
         <div class="tour-preview-stops">📍 ${tour.highlights?.join(' → ') || tour.description}</div>
         <button class="tour-preview-btn" onclick="selectFoundTour()">Build my guide for this tour →</button>`;
       document.getElementById('url-status').after(preview);
@@ -868,8 +907,193 @@
   function nextStop() { window.speechSynthesis.cancel(); audioIndex++; updateAudioUI(); setTimeout(() => playCurrentSegment(), 300); }
   function stopAudio() { window.speechSynthesis.cancel(); audioPlaying = false; audioIndex = 0; audioSegments = []; document.getElementById('audio-bar').classList.remove('visible'); }
 
+  // ── MY TOURS ─────────────────────────────────────────────────────
+  const TOURS_KEY = 'travelens_saved_tours';
+
+  function getSavedTours() {
+    try { return JSON.parse(localStorage.getItem(TOURS_KEY) || '[]'); }
+    catch(e) { return []; }
+  }
+
+  function saveTours(tours) {
+    localStorage.setItem(TOURS_KEY, JSON.stringify(tours));
+    updateToursCount();
+  }
+
+  function updateToursCount() {
+    const tours = getSavedTours();
+    const trigger = document.getElementById('my-tours-trigger');
+    const count = document.getElementById('tours-count');
+    if (tours.length > 0) {
+      trigger.style.display = 'inline-flex';
+      count.textContent = tours.length;
+    } else {
+      trigger.style.display = 'none';
+    }
+  }
+
+  function saveTour() {
+    if (!rawTourText || !currentCity) return;
+    const tours = getSavedTours();
+
+    // Check if already saved
+    const exists = tours.find(t => t.city === currentCity && t.text === rawTourText);
+    if (exists) { showToast('Already saved!'); return; }
+
+    const tour = {
+      id: Date.now(),
+      city: currentCity,
+      text: rawTourText,
+      stops: stopNames,
+      savedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      source: selectedTourContext?.source || 'AI Tour',
+      tourTitle: selectedTourContext?.title || `${currentCity} AI Tour`
+    };
+
+    tours.unshift(tour); // newest first
+    saveTours(tours);
+
+    // Update save button
+    const btn = document.getElementById('save-btn');
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved!`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save`;
+    }, 2500);
+
+    showToast('Tour saved! ✓');
+  }
+
+  function showToast(msg) {
+    let toast = document.getElementById('save-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'save-toast';
+      toast.className = 'save-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function showMyTours() {
+    // Hide all steps and output
+    ['step1','step2','step3a','step3b','output-section'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('my-tours-screen').style.display = 'block';
+    renderSavedTours();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideMyTours() {
+    document.getElementById('my-tours-screen').style.display = 'none';
+    showStep(1);
+  }
+
+  function renderSavedTours() {
+    const tours = getSavedTours();
+    const list = document.getElementById('saved-tours-list');
+    const subtitle = document.getElementById('my-tours-subtitle');
+
+    if (!tours.length) {
+      subtitle.textContent = '';
+      list.innerHTML = `
+        <div class="no-tours">
+          <div class="no-tours-icon">🗺️</div>
+          <div class="no-tours-title">No saved tours yet</div>
+          <div class="no-tours-sub">Generate a tour and tap Save to keep it here</div>
+        </div>`;
+      return;
+    }
+
+    subtitle.textContent = `${tours.length} tour${tours.length > 1 ? 's' : ''} saved on this device`;
+    list.innerHTML = tours.map(t => `
+      <div class="saved-tour-card">
+        <div class="saved-tour-header">
+          <div>
+            <div class="saved-tour-city">${t.city}</div>
+          </div>
+          <button class="saved-tour-delete" onclick="deleteTour(${t.id})" title="Delete">×</button>
+        </div>
+        <div class="saved-tour-meta">
+          <span>📅 ${t.savedAt}</span>
+          <span>🏷️ ${t.source}</span>
+          <span>📍 ${t.stops?.length || 0} stops</span>
+        </div>
+        <div class="saved-tour-stops">${t.stops?.join(' → ') || t.tourTitle}</div>
+        <div class="saved-tour-actions">
+          <button class="saved-action-btn primary" onclick="openSavedTour(${t.id})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Open tour
+          </button>
+          <button class="saved-action-btn" onclick="openSavedMaps(${t.id})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Maps
+          </button>
+          <button class="saved-action-btn" onclick="printSavedTour(${t.id})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function deleteTour(id) {
+    const tours = getSavedTours().filter(t => t.id !== id);
+    saveTours(tours);
+    renderSavedTours();
+    if (!tours.length) updateToursCount();
+  }
+
+  function openSavedTour(id) {
+    const tour = getSavedTours().find(t => t.id === id);
+    if (!tour) return;
+    rawTourText = tour.text;
+    currentCity = tour.city;
+    stopNames = tour.stops || [];
+    document.getElementById('my-tours-screen').style.display = 'none';
+    document.getElementById('output-section').classList.add('visible');
+    document.getElementById('download-bar').style.display = 'flex';
+    renderOutput(tour.text, tour.city);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openSavedMaps(id) {
+    const tour = getSavedTours().find(t => t.id === id);
+    if (!tour?.stops?.length) return;
+    const city = tour.city.split(',')[0];
+    const waypoints = tour.stops.map(s => encodeURIComponent(s + ', ' + city));
+    const url = waypoints.length === 1
+      ? `https://www.google.com/maps/search/${waypoints[0]}`
+      : `https://www.google.com/maps/dir/${waypoints.join('/')}`;
+    window.open(url, '_blank');
+  }
+
+  function printSavedTour(id) {
+    const tour = getSavedTours().find(t => t.id === id);
+    if (!tour) return;
+    // Load tour into output then print
+    rawTourText = tour.text;
+    currentCity = tour.city;
+    stopNames = tour.stops || [];
+    renderOutput(tour.text, tour.city);
+    document.getElementById('pdf-city').textContent = tour.city + ' Walking Tour';
+    document.getElementById('pdf-date').textContent = 'Generated by Travelens · travelens-ten.vercel.app · ' + tour.savedAt;
+    setTimeout(() => window.print(), 300);
+  }
+  // ── END MY TOURS ──────────────────────────────────────────────────
+
   // ── INIT ─────────────────────────────────────────────────────────
-  window.addEventListener('load', initGreeting);
+  window.addEventListener('load', () => {
+    initGreeting();
+    updateToursCount();
+  });
   if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }
 </script>
 </body>
