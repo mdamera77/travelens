@@ -549,48 +549,71 @@
     loadDbTours(cityName);
   }
 
-  // Load pre-built tours from database
-  let toursDb = null;
+  // Load tours — from Upstash cache or generate fresh
+  let toursCache = {}; // in-memory cache per session
   async function loadDbTours(cityName) {
     const section = document.getElementById('db-tours-section');
     const list = document.getElementById('db-tours-list');
-    section.style.display = 'none';
+
+    // Show loading state
+    section.style.display = 'block';
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">
+      <div class="spinner" style="margin:0 auto 10px;border-color:rgba(29,158,117,0.3);border-top-color:var(--green);width:20px;height:20px;"></div>
+      Finding tours in ${cityName}...
+    </div>`;
+
+    // Check in-memory cache first
+    if (toursCache[cityName]) {
+      renderDbTours(toursCache[cityName], cityName);
+      return;
+    }
 
     try {
-      if (!toursDb) {
-        const res = await fetch('/tours-db.json');
-        toursDb = await res.json();
-      }
-      const cityData = toursDb.cities[cityName];
-      if (!cityData?.tours?.length) return;
+      const res = await fetch('/api/get-tours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: cityName })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
 
-      section.style.display = 'block';
-      list.innerHTML = cityData.tours.map((t, i) => `
-        <div class="tour-db-card" onclick="selectDbTour(${i}, '${cityName}')">
-          <div class="tour-db-header">
-            <span class="tour-db-source" style="background:${t.sourceColor}">${t.source}</span>
-            <div class="tour-db-title">${t.title}</div>
-          </div>
-          <div class="tour-db-meta">
-            <span>⏱ ${t.duration}</span>
-            <span>💰 ${t.price}</span>
-            <span>⭐ ${t.rating} (${t.reviews} reviews)</span>
-            <span>📍 ${t.highlights.length} stops</span>
-          </div>
-          <div class="tour-db-desc">${t.description}</div>
-          <div class="tour-db-stops">📍 ${t.highlights.slice(0, 5).join(' → ')}${t.highlights.length > 5 ? ' +' + (t.highlights.length - 5) + ' more' : ''}</div>
-          <div class="tour-db-themes">${(t.themes || []).map(th => `<span class="tour-db-theme">${th}</span>`).join('')}</div>
-          <button class="tour-db-btn">Build my guide for this tour →</button>
-        </div>
-      `).join('');
+      toursCache[cityName] = data.tours;
+      renderDbTours(data.tours, cityName);
 
     } catch(e) {
       section.style.display = 'none';
     }
   }
 
+  function renderDbTours(tours, cityName) {
+    const section = document.getElementById('db-tours-section');
+    const list = document.getElementById('db-tours-list');
+
+    if (!tours?.length) { section.style.display = 'none'; return; }
+
+    section.style.display = 'block';
+    list.innerHTML = tours.map((t, i) => `
+      <div class="tour-db-card" onclick="selectDbTour(${i}, '${cityName}')">
+        <div class="tour-db-header">
+          <span class="tour-db-source" style="background:${t.sourceColor}">${t.source}</span>
+          <div class="tour-db-title">${t.title}</div>
+        </div>
+        <div class="tour-db-meta">
+          <span>⏱ ${t.duration}</span>
+          <span>💰 ${t.price}</span>
+          <span>⭐ ${t.rating} (${t.reviews} reviews)</span>
+          <span>📍 ${t.highlights?.length || 0} stops</span>
+        </div>
+        <div class="tour-db-desc">${t.description}</div>
+        <div class="tour-db-stops">📍 ${(t.highlights || []).slice(0, 5).join(' → ')}${(t.highlights?.length || 0) > 5 ? ' +' + (t.highlights.length - 5) + ' more' : ''}</div>
+        <div class="tour-db-themes">${(t.themes || []).map(th => `<span class="tour-db-theme">${th}</span>`).join('')}</div>
+        <button class="tour-db-btn" onclick="event.stopPropagation();selectDbTour(${i}, '${cityName}')">Build my guide for this tour →</button>
+      </div>
+    `).join('');
+  }
+
   function selectDbTour(index, cityName) {
-    const tour = toursDb?.cities[cityName]?.tours[index];
+    const tour = toursCache[cityName]?.[index];
     if (!tour) return;
     selectedTourContext = tour;
     generateTour(tour);
