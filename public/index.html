@@ -1225,10 +1225,12 @@
 
   // ── SHARE TOUR ───────────────────────────────────────────────────
   async function shareTour() {
-    if (!rawTourText || !currentCity) return;
+    if (!rawTourText || !currentCity) {
+      showToast('No tour to share — generate one first');
+      return;
+    }
 
     try {
-      // Encode full tour using TextEncoder (handles all unicode safely)
       const payload = {
         city: currentCity,
         text: rawTourText,
@@ -1237,12 +1239,27 @@
         title: selectedTourContext?.title || `${currentCity} Walking Tour`
       };
 
-      const json = JSON.stringify(payload);
-      // Most reliable browser-safe unicode encoding
-      const encoded = btoa(unescape(encodeURIComponent(json)));
+      // Step 1: stringify
+      let json;
+      try {
+        json = JSON.stringify(payload);
+      } catch(e) {
+        showToast('Error: could not serialise tour — ' + e.message);
+        return;
+      }
+
+      // Step 2: encode
+      let encoded;
+      try {
+        encoded = btoa(unescape(encodeURIComponent(json)));
+      } catch(e) {
+        showToast('Error: encoding failed — ' + e.message);
+        return;
+      }
+
       const shareURL = `${window.location.origin}/?tour=${encoded}`;
 
-      // iPhone — native share sheet
+      // iPhone native share sheet
       if (navigator.share) {
         await navigator.share({
           title: `${currentCity} Walking Tour — Travelens`,
@@ -1252,7 +1269,7 @@
         return;
       }
 
-      // Desktop — try clipboard then show modal
+      // Desktop — clipboard then modal
       try {
         await navigator.clipboard.writeText(shareURL);
         const btn = document.getElementById('share-btn');
@@ -1263,13 +1280,13 @@
           btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share`;
         }, 2500);
         showToast('Link copied! Send it to your travel buddy 📤');
-      } catch(e) {
+      } catch(clipErr) {
         showShareModal(shareURL);
       }
 
     } catch(e) {
       console.error('Share error:', e);
-      showToast('Could not generate share link — try again');
+      showToast('Error: ' + e.message);
     }
   }
 
