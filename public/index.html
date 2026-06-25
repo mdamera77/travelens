@@ -1366,10 +1366,10 @@
   // ── END LOAD SHARED TOUR ─────────────────────────────────────────
 
   // ── INIT ─────────────────────────────────────────────────────────
-  window.addEventListener('load', () => {
+  window.addEventListener('load', async () => {
     updateToursCount();
-    // Check for shared tour in URL first — if found, skip greeting
-    if (!checkSharedTour()) {
+    const handled = await checkSharedTour();
+    if (!handled) {
       initGreeting();
     }
   });
