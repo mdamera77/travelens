@@ -568,6 +568,7 @@
       return;
     }
 
+    // Try live API first
     try {
       const res = await fetch('/api/get-tours', {
         method: 'POST',
@@ -576,13 +577,31 @@
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-
-      toursCache[cityName] = data.tours;
-      renderDbTours(data.tours, cityName);
-
+      if (data.tours?.length) {
+        toursCache[cityName] = data.tours;
+        renderDbTours(data.tours, cityName);
+        return;
+      }
     } catch(e) {
-      section.style.display = 'none';
+      console.log('API failed, trying static DB:', e.message);
     }
+
+    // Fallback — try static tours-db.json
+    try {
+      const res = await fetch('/tours-db.json');
+      const db = await res.json();
+      const cityData = db.cities?.[cityName];
+      if (cityData?.tours?.length) {
+        toursCache[cityName] = cityData.tours;
+        renderDbTours(cityData.tours, cityName);
+        return;
+      }
+    } catch(e) {
+      console.log('Static DB also failed:', e.message);
+    }
+
+    // Nothing found — hide section
+    section.style.display = 'none';
   }
 
   function renderDbTours(tours, cityName) {
