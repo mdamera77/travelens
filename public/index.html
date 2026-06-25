@@ -1238,9 +1238,8 @@
       };
 
       const json = JSON.stringify(payload);
-      // Reliable unicode-safe encoding
-      const encoded = btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,
-        (match, p1) => String.fromCharCode('0x' + p1)));
+      // Most reliable browser-safe unicode encoding
+      const encoded = btoa(unescape(encodeURIComponent(json)));
       const shareURL = `${window.location.origin}/?tour=${encoded}`;
 
       // iPhone — native share sheet
@@ -1328,16 +1327,19 @@
     const encoded = params.get('tour');
     if (!encoded) return false;
     try {
-      const bytes = Uint8Array.from(atob(decodeURIComponent(encoded)), c => c.charCodeAt(0));
-      const json = new TextDecoder().decode(bytes);
       let payload;
       try {
+        // Current encoding: btoa(unescape(encodeURIComponent(json)))
+        const json = decodeURIComponent(escape(atob(encoded)));
         payload = JSON.parse(json);
-      } catch(e) {
-        // Try old encoding format
-        const decoded = decodeURIComponent(atob(encoded).split('').map(c =>
-          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-        payload = JSON.parse(decoded);
+      } catch(e1) {
+        try {
+          // Fallback for TextEncoder format
+          const bytes = Uint8Array.from(atob(decodeURIComponent(encoded)), c => c.charCodeAt(0));
+          payload = JSON.parse(new TextDecoder().decode(bytes));
+        } catch(e2) {
+          throw new Error('Could not decode shared tour');
+        }
       }
       if (!payload.city) return false;
 
