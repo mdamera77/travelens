@@ -1238,10 +1238,10 @@
       };
 
       const json = JSON.stringify(payload);
-      const bytes = new TextEncoder().encode(json);
-      const binString = Array.from(bytes, b => String.fromCharCode(b)).join('');
-      const encoded = btoa(binString);
-      const shareURL = `${window.location.origin}/?tour=${encodeURIComponent(encoded)}`;
+      // Reliable unicode-safe encoding
+      const encoded = btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,
+        (match, p1) => String.fromCharCode('0x' + p1)));
+      const shareURL = `${window.location.origin}/?tour=${encoded}`;
 
       // iPhone — native share sheet
       if (navigator.share) {
@@ -1330,7 +1330,15 @@
     try {
       const bytes = Uint8Array.from(atob(decodeURIComponent(encoded)), c => c.charCodeAt(0));
       const json = new TextDecoder().decode(bytes);
-      const payload = JSON.parse(json);
+      let payload;
+      try {
+        payload = JSON.parse(json);
+      } catch(e) {
+        // Try old encoding format
+        const decoded = decodeURIComponent(atob(encoded).split('').map(c =>
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        payload = JSON.parse(decoded);
+      }
       if (!payload.city) return false;
 
       rawTourText = payload.text || '';
