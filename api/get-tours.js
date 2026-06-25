@@ -11,8 +11,8 @@ export default async function handler(req, res) {
 
   // ── STEP 1: Check Upstash cache first ─────────────────────────
   try {
-    const cacheRes = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/get/${cacheKey}`, {
-      headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` }
+    const cacheRes = await fetch(`${process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL}/get/${cacheKey}`, {
+      headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN}` }
     });
     const cacheData = await cacheRes.json();
     if (cacheData.result) {
@@ -86,10 +86,10 @@ Rules:
 
     // ── STEP 3: Save to Upstash (cache for 30 days) ─────────────
     try {
-      await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/set/${cacheKey}`, {
+      await fetch(`${process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL}/set/${cacheKey}`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
