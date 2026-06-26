@@ -111,9 +111,30 @@ Respond ONLY with valid JSON, no markdown, no code fences:
       parsed.fetchBlocked = true;
     }
 
+    seedPastedTour(parsed, city || 'unknown'); // Auto-save to DB
     res.status(200).json({ tour: parsed });
 
   } catch(err) {
     res.status(500).json({ error: err.message });
+  }
+}
+
+// Auto-seed: save user-pasted tours to the database
+async function seedPastedTour(tour, city) {
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+  if (!redisUrl || !redisToken || !tour?.highlights?.length) return;
+
+  const cityKey = city.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const source = (tour.source || 'user').toLowerCase().replace(/[^a-z0-9]/g, '-');
+  const key = `tours-db:${cityKey}:user-${source}-${Date.now()}`;
+
+  try {
+    await fetch(`${redisUrl}/set/${key}/${encodeURIComponent(JSON.stringify({ ...tour, city }))}/ex/7776000`, {
+      headers: { Authorization: `Bearer ${redisToken}` }
+    });
+    console.log(`Auto-seeded user tour for ${city}: ${tour.title}`);
+  } catch(e) {
+    console.log('Auto-seed failed (non-critical):', e.message);
   }
 }
