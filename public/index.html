@@ -136,7 +136,7 @@
     .walk-note { font-size: 12px; color: var(--green-dark); margin: 8px 0 0; display: flex; align-items: flex-start; gap: 5px; }
     .tip-box { background: var(--green-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; color: var(--green-dark); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
     .reset-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 6px; font-family: inherit; }
-    .float-home { position: fixed; top: 16px; right: 16px; z-index: 500; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; display: none; align-items: center; gap: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-family: inherit; -webkit-tap-highlight-color: transparent; }
+    .float-home { position: fixed; top: 16px; right: 16px; z-index: 500; background: var(--green); border: none; border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; color: white; cursor: pointer; display: none; align-items: center; gap: 6px; box-shadow: 0 2px 12px rgba(29,158,117,0.4); font-family: inherit; -webkit-tap-highlight-color: transparent; }
     .float-home.visible { display: flex; }
     @media print { .float-home { display: none !important; } }
     .error-box { background: #FCEBEB; border-radius: 10px; padding: 14px; color: #A32D2D; font-size: 14px; margin-bottom: 14px; }
@@ -822,6 +822,13 @@
     document.getElementById('download-bar').style.display = 'none';
     document.getElementById('progress-fill').style.width = '0%';
     rawTourText = ''; stopNames = []; selectedTourContext = null;
+    // Restore original greeting
+    const name = localStorage.getItem('travelens_name');
+    if (name) {
+      const g = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
+      const rg = document.getElementById('return-greeting');
+      if (rg) rg.textContent = g(name);
+    }
     clearLocationSelection();
     document.getElementById('city').value = '';
     document.getElementById('dates').value = '';
@@ -945,6 +952,11 @@
     let prog = 0;
     const ticker = setInterval(() => { prog = Math.min(prog + Math.random() * 7, 85); fill.style.width = prog + '%'; }, 400);
 
+    // Update greeting to show what's being built
+    const cityName = city.split(',')[0];
+    const returnGreeting = document.getElementById('return-greeting');
+    if (returnGreeting) returnGreeting.textContent = `Building your ${cityName} tour — this takes about 20 seconds...`;
+
     try {
       const res = await fetch('/api/tour', {
         method: 'POST',
@@ -955,7 +967,11 @@
       clearInterval(ticker);
       fill.style.width = '100%';
       if (data.error) throw new Error(data.error);
-      setTimeout(() => renderOutput(data.tour || '', city), 400);
+      setTimeout(() => {
+        renderOutput(data.tour || '', city);
+        const rg = document.getElementById('return-greeting');
+        if (rg) rg.textContent = `Your ${city.split(',')[0]} walking tour is ready ✓`;
+      }, 400);
     } catch (err) {
       clearInterval(ticker);
       document.getElementById('output-content').innerHTML = `<div class="error-box"><strong>Could not generate tour.</strong><br>${err.message || 'Check your connection and try again.'}</div>`;
