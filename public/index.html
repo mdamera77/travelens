@@ -136,6 +136,9 @@
     .walk-note { font-size: 12px; color: var(--green-dark); margin: 8px 0 0; display: flex; align-items: flex-start; gap: 5px; }
     .tip-box { background: var(--green-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; color: var(--green-dark); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
     .reset-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 6px; font-family: inherit; }
+    .float-home { position: fixed; top: 16px; right: 16px; z-index: 500; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; display: none; align-items: center; gap: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); font-family: inherit; -webkit-tap-highlight-color: transparent; }
+    .float-home.visible { display: flex; }
+    @media print { .float-home { display: none !important; } }
     .error-box { background: #FCEBEB; border-radius: 10px; padding: 14px; color: #A32D2D; font-size: 14px; margin-bottom: 14px; }
     .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.75s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -469,6 +472,12 @@
 
   </div><!-- end main-app -->
 </div>
+
+<!-- Floating home button — visible when tour is showing -->
+<button class="float-home" id="float-home-btn" onclick="resetApp()">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+  New tour
+</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -808,6 +817,7 @@
     audioPlaying = false; audioSegments = [];
     document.getElementById('audio-bar').classList.remove('visible');
     document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('float-home-btn').classList.remove('visible');
     document.getElementById('output-content').innerHTML = '';
     document.getElementById('download-bar').style.display = 'none';
     document.getElementById('progress-fill').style.width = '0%';
@@ -905,6 +915,7 @@
       }
     });
     document.getElementById('download-bar').style.display = 'flex';
+      document.getElementById('float-home-btn').classList.add('visible');
     // If text parsing yielded no stops, use preserved stops (for saved tours)
     if (stopNames.length === 0 && preservedStops?.length) {
       stopNames = preservedStops;
@@ -927,6 +938,7 @@
     // Hide all steps, show output
     [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
     document.getElementById('output-section').classList.add('visible');
+    document.getElementById('float-home-btn').classList.add('visible');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     const fill = document.getElementById('progress-fill');
@@ -1104,6 +1116,7 @@
       if (el) el.style.display = 'none';
     });
     document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('float-home-btn').classList.remove('visible');
     document.getElementById('my-tours-screen').style.display = 'block';
     renderSavedTours();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1196,6 +1209,7 @@
     // Render the tour content
     renderOutput(tour.text, tour.city, tour.stops || []);
     document.getElementById('download-bar').style.display = 'flex';
+      document.getElementById('float-home-btn').classList.add('visible');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -1354,6 +1368,7 @@
       outputSection.insertBefore(banner, outputContent);
       renderOutput(tour.text, tour.city, tour.stops || []);
       document.getElementById('download-bar').style.display = 'flex';
+      document.getElementById('float-home-btn').classList.add('visible');
       updateToursCount();
       window.history.replaceState({}, '', window.location.pathname);
       return true;
