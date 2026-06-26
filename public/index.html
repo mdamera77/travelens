@@ -9,7 +9,1386 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Travelens" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" /><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Travelens — GPS for the Wandering Soul</title>
+  <meta name="description" content="AI-powered personalised walking tours for any city in the world." />
+  <meta name="theme-color" content="#1D9E75" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Travelens" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green: #1D9E75; --green-dark: #0F6E56; --green-light: #E1F5EE;
+      --amber: #EF9F27; --amber-light: #FAEEDA;
+      --text: #1a1a1a; --text-muted: #666; --border: rgba(0,0,0,0.1);
+      --bg: #f8f8f6; --card: #ffffff; --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #f0f0ee; --text-muted: #999; --border: rgba(255,255,255,0.1);
+        --bg: #141412; --card: #1e1e1c; --green-light: #0a3326; --amber-light: #2a1e08;
+      }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
+    .app { max-width: 480px; margin: 0 auto; padding: 0 16px 40px; }
+    .hero { text-align: center; padding: 40px 0 24px; }
+    .hero-icon { width: 60px; height: 60px; background: var(--green); border-radius: 16px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; }
+    .hero-icon svg { width: 32px; height: 32px; fill: none; stroke: white; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .logo { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .logo span { color: var(--green); }
+    .return-greeting { font-size: 14px; color: var(--green-dark); margin-top: 6px; font-style: italic; min-height: 20px; }
+    .card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 20px; margin-bottom: 14px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-of-type { margin-bottom: 0; }
+    label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
+    input { width: 100%; padding: 11px 14px; font-size: 15px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); outline: none; -webkit-appearance: none; font-family: inherit; }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+    input::placeholder { color: var(--text-muted); }
+    .section-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+    .pill-group { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pill { padding: 6px 13px; border-radius: 20px; font-size: 13px; border: 0.5px solid var(--border); background: var(--bg); color: var(--text-muted); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: all 0.15s; user-select: none; }
+    .pill.active { background: var(--green-light); border-color: var(--green); color: var(--green-dark); font-weight: 600; }
+    .btn { width: 100%; padding: 15px; background: var(--green); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; -webkit-tap-highlight-color: transparent; transition: opacity 0.15s, transform 0.1s; font-family: inherit; }
+    .btn:active { transform: scale(0.98); opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; }
+    .hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; padding-left: 2px; }
+    .back-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 0 0 14px; display: flex; align-items: center; gap: 5px; font-size: 13px; font-family: inherit; }
+
+    /* Step 2 — Mode chooser */
+    .mode-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .mode-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+    .mode-cards { display: flex; flex-direction: column; gap: 12px; }
+    .mode-card { display: flex; align-items: center; gap: 14px; padding: 18px 16px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .mode-card:hover { border-color: var(--green); box-shadow: 0 2px 16px rgba(29,158,117,0.1); }
+    .mode-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .mode-icon.green { background: var(--green-light); }
+    .mode-icon.amber { background: var(--amber-light); }
+    .mode-card-text { flex: 1; }
+    .mode-card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .mode-card-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+    .mode-card-arrow { color: var(--text-muted); flex-shrink: 0; }
+
+    /* Step 3A — Free tour sites */
+    /* Pre-loaded tour cards from database */
+    .tour-db-card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .tour-db-card:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(29,158,117,0.1); }
+    .tour-db-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .tour-db-source { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; color: white; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+    .tour-db-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; flex: 1; }
+    .tour-db-meta { display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+    .tour-db-meta span { font-size: 11px; color: var(--text-muted); }
+    .tour-db-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px; }
+    .tour-db-stops { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 10px; }
+    .tour-db-themes { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .tour-db-theme { font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); }
+    .tour-db-btn { width: 100%; padding: 10px; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    .site-links { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .site-link { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all 0.15s; }
+    .site-link:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(29,158,117,0.1); }
+    .site-link svg { margin-left: auto; flex-shrink: 0; color: var(--text-muted); }
+    .site-icon { font-size: 20px; flex-shrink: 0; }
+    .site-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .site-desc { font-size: 12px; color: var(--text-muted); }
+    .paste-section { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 4px; }
+    .paste-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .paste-row { display: flex; gap: 8px; }
+    .paste-row input { flex: 1; padding: 11px 14px; font-size: 14px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
+    .paste-row input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+    .paste-go-btn { width: 44px; height: 44px; background: var(--green); color: white; border: none; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .url-status { font-size: 13px; margin-top: 10px; padding: 10px 12px; border-radius: 8px; }
+    .url-status.loading { background: var(--green-light); color: var(--green-dark); display: flex; align-items: center; gap: 8px; }
+    .url-status.error { background: #FCEBEB; color: #A32D2D; }
+    .tour-preview { background: var(--green-light); border-radius: 10px; padding: 14px; margin-top: 10px; }
+    .tour-preview-title { font-size: 14px; font-weight: 600; color: var(--green-dark); margin-bottom: 6px; }
+    .tour-preview-stops { font-size: 12px; color: var(--green-dark); line-height: 1.6; margin-bottom: 12px; }
+    .tour-preview-btn { width: 100%; padding: 12px; background: var(--green); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .or-divider { text-align: center; font-size: 12px; color: var(--text-muted); margin: 14px 0; display: flex; align-items: center; gap: 10px; }
+    .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+    .skip-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; font-family: inherit; }
+
+    /* Step 3B — Build own: start location */
+    .location-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+    .loc-btn { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text); transition: all 0.15s; font-family: inherit; width: 100%; text-align: left; }
+    .loc-btn:hover { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+    .loc-btn.active { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+    .loc-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+    .loc-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-weight: 400; }
+    .loc-btn.active .loc-sub { color: var(--green-dark); }
+
+    /* Map */
+    #pin-map { height: 220px; border-radius: 12px; margin-top: 10px; border: 0.5px solid var(--border); display: none; }
+    .map-hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; text-align: center; display: none; }
+
+    /* Output */
+    .output { display: none; }
+    .output.visible { display: block; }
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
+    .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
+    .tour-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .tour-title { font-size: 20px; font-weight: 700; color: var(--text); text-transform: capitalize; }
+    .ai-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--green-light); color: var(--green-dark); font-weight: 600; }
+    .stop-card { background: var(--card); border-radius: var(--radius); border: 0.5px solid var(--border); border-left: 3px solid var(--green); padding: 16px; margin-bottom: 10px; }
+    .stop-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .stop-num { background: var(--green); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .stop-name { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+    .stop-time { font-size: 12px; color: var(--text-muted); }
+    .stop-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+    .tidbits-label { font-size: 11px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .tidbit { font-size: 13px; color: var(--text-muted); line-height: 1.5; padding: 7px 10px; border-left: 2px solid var(--amber); margin-bottom: 5px; font-style: italic; background: var(--amber-light); border-radius: 0 6px 6px 0; }
+    .walk-note { font-size: 12px; color: var(--green-dark); margin: 8px 0 0; display: flex; align-items: flex-start; gap: 5px; }
+    .tip-box { background: var(--green-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; color: var(--green-dark); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+    .reset-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 6px; font-family: inherit; }
+    .error-box { background: #FCEBEB; border-radius: 10px; padding: 14px; color: #A32D2D; font-size: 14px; margin-bottom: 14px; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Download bar */
+    .download-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+    .dl-btn { flex: 1; padding: 11px 5px; border: 0.5px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.15s; font-family: inherit; }
+    .dl-btn:hover { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+    .dl-btn.copied { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+
+    /* Audio */
+    .audio-bar { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; display: none; }
+    .audio-bar.visible { display: block; }
+    .audio-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .audio-stop { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; min-height: 18px; }
+    .audio-controls { display: flex; gap: 8px; }
+    .audio-btn { flex: 1; padding: 10px 6px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; transition: all 0.15s; font-family: inherit; }
+    .audio-btn.primary { background: var(--green); color: white; border-color: var(--green); }
+    .audio-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .audio-progress { height: 3px; background: var(--border); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
+    .audio-progress-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+
+    /* PDF */
+    @media print {
+      body { background: white; color: #1a1a1a; }
+      .app { max-width: 100%; padding: 0; }
+      #greeting-screen, #step1, #step2, #step3a, #step3b, .reset-btn, .download-bar, .progress-bar, .audio-bar, #my-tours-screen, .my-tours-trigger { display: none !important; }
+      .output { display: block !important; }
+      .stop-card { break-inside: avoid; border: 1px solid #ddd; border-left: 3px solid #1D9E75; }
+      .tidbit { background: #FAEEDA; border-left: 2px solid #EF9F27; }
+      .tip-box { background: #E1F5EE; }
+      .pdf-header { display: block !important; }
+    }
+    .pdf-header { display: none; text-align: center; padding: 20px 0 30px; border-bottom: 2px solid #1D9E75; margin-bottom: 24px; }
+    .pdf-header .pdf-logo { font-size: 28px; font-weight: 700; color: #1a1a1a; }
+    .pdf-header .pdf-logo span { color: #1D9E75; }
+    .pdf-header .pdf-tagline { font-size: 12px; color: #666; margin-top: 4px; }
+    .pdf-header .pdf-city { font-size: 20px; font-weight: 600; color: #1D9E75; margin-top: 12px; }
+    .pdf-header .pdf-date { font-size: 12px; color: #666; margin-top: 4px; }
+
+    /* My Tours */
+    .my-tours-trigger { background: var(--green-light); border: 0.5px solid var(--green); color: var(--green-dark); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+    .tours-count { background: var(--green); color: white; border-radius: 10px; padding: 1px 7px; font-size: 11px; }
+    .saved-tour-card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
+    .saved-tour-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+    .saved-tour-city { font-size: 16px; font-weight: 700; color: var(--text); }
+    .saved-tour-delete { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 2px; font-size: 18px; line-height: 1; }
+    .saved-tour-meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .saved-tour-stops { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .saved-tour-actions { display: flex; gap: 8px; }
+    .saved-action-btn { flex: 1; padding: 9px 6px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-family: inherit; transition: all 0.15s; }
+    .saved-action-btn.primary { background: var(--green); color: white; border-color: var(--green); }
+    .no-tours { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .no-tours-icon { font-size: 40px; margin-bottom: 12px; }
+    .no-tours-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .no-tours-sub { font-size: 13px; }
+    .save-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; font-weight: 600; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+    .save-toast.show { opacity: 1; }
+
+    /* Greeting */
+    #greeting-screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 100dvh; padding: 40px 20px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- GREETING SCREEN -->
+  <div id="greeting-screen">
+    <div class="hero-icon" style="margin:0 auto 14px;">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    </div>
+    <div class="logo">Travel<span>ens</span></div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;">GPS for the wandering soul</div>
+    <div id="greeting-message" style="font-size:18px;color:var(--text);margin:32px 0 24px;line-height:1.6;max-width:300px;"></div>
+    <input type="text" id="name-input" placeholder="Your name..." style="width:100%;max-width:300px;padding:13px 16px;font-size:16px;border:0.5px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;text-align:center;margin-bottom:12px;font-family:inherit;" />
+    <button onclick="saveName()" style="width:100%;max-width:300px;padding:13px;background:var(--green);color:white;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;">Let's wander →</button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="main-app" style="display:none;">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      </div>
+      <div class="logo">Travel<span>ens</span></div>
+      <div class="return-greeting" id="return-greeting"></div>
+      <button class="my-tours-trigger" id="my-tours-trigger" onclick="showMyTours()" style="display:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        My Tours <span id="tours-count" class="tours-count"></span>
+      </button>
+    </div>
+
+    <!-- STEP 1: City -->
+    <div id="step1">
+      <div class="card">
+        <div class="form-group" style="position:relative;margin-bottom:0;">
+          <label>Where are you going?</label>
+          <input type="text" id="city" placeholder="Prague, Tokyo, Oaxaca..." autocomplete="off" oninput="citySearch(this.value)" />
+          <div id="city-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:0.5px solid var(--border);border-radius:10px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;margin-top:4px;"></div>
+        </div>
+      </div>
+      <button class="btn" onclick="goToStep2()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Let's explore
+      </button>
+    </div>
+
+    <!-- STEP 2: Mode chooser -->
+    <div id="step2" style="display:none;">
+      <button class="back-btn" onclick="goBack(1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="mode-title" id="step2-title">What would you like to do?</div>
+      <div class="mode-subtitle" id="step2-subtitle">Choose how you want to explore</div>
+      <div class="mode-cards">
+        <div class="mode-card" onclick="goToStep3a()">
+          <div class="mode-icon green">🗺️</div>
+          <div class="mode-card-text">
+            <div class="mode-card-title">Find a free walking tour</div>
+            <div class="mode-card-desc">Browse GuruWalk, FreeTour & more — paste a link and we build your guide</div>
+          </div>
+          <svg class="mode-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="mode-card" onclick="goToStep3b()">
+          <div class="mode-icon amber">✨</div>
+          <div class="mode-card-text">
+            <div class="mode-card-title">Build my own AI tour</div>
+            <div class="mode-card-desc">Tell us your vibe and we'll craft a personalised tour just for you</div>
+          </div>
+          <svg class="mode-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3A: Free tour sites + paste URL -->
+    <div id="step3a" style="display:none;">
+      <button class="back-btn" onclick="goBack(2)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="mode-title" id="step3a-title">Find a tour in Prague</div>
+      <div class="mode-subtitle">Choose a popular tour or paste any link from a tour site</div>
+
+      <!-- Pre-loaded tours from database -->
+      <div id="db-tours-section" style="display:none;">
+        <div class="section-label" style="margin-bottom:10px;">🏆 Popular tours</div>
+        <div id="db-tours-list"></div>
+        <div class="or-divider">or browse & paste your own</div>
+      </div>
+      <div class="site-links">
+        <a class="site-link" id="link-guruwalk" href="#" target="_blank">
+          <span class="site-icon">🟠</span>
+          <div><div class="site-name">GuruWalk</div><div class="site-desc">Free tours with local guides</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="site-link" id="link-freetour" href="#" target="_blank">
+          <span class="site-icon">🔵</span>
+          <div><div class="site-name">FreeTour.com</div><div class="site-desc">Free walking tours worldwide</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="site-link" id="link-getyourguide" href="#" target="_blank">
+          <span class="site-icon">🔴</span>
+          <div><div class="site-name">GetYourGuide</div><div class="site-desc">Tours & activities worldwide</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <a class="site-link" id="link-foot" href="#" target="_blank">
+          <span class="site-icon">🟢</span>
+          <div><div class="site-name">FreeToursByFoot</div><div class="site-desc">Self-guided & free tours</div></div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+      <div class="paste-section">
+        <div class="paste-label">Found a tour? Paste the link here:</div>
+        <div class="paste-row">
+          <input type="text" id="tour-url-input" placeholder="https://www.guruwalk.com/walks/..." autocomplete="off" />
+          <button class="paste-go-btn" onclick="buildFromURL()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          </button>
+        </div>
+        <div id="url-status" class="url-status" style="display:none;"></div>
+      </div>
+      <div class="or-divider">or</div>
+      <button class="skip-btn" onclick="goToStep3b()">✨ Build me an AI tour instead</button>
+    </div>
+
+    <!-- STEP 3B: Build own tour -->
+    <div id="step3b" style="display:none;">
+      <button class="back-btn" onclick="goBack(2)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="mode-title">Build your AI tour</div>
+      <div class="mode-subtitle" id="step3b-subtitle">Personalised for Prague</div>
+
+      <div class="card">
+        <label>Where should your tour start?</label>
+        <div class="location-options">
+          <button class="loc-btn" id="loc-current" onclick="useCurrentLocation()">
+            <span class="loc-icon">📍</span>
+            <div>
+              <div>Use my current location</div>
+              <div class="loc-sub">We'll start the tour from where you are now</div>
+            </div>
+          </button>
+          <button class="loc-btn" id="loc-pin" onclick="showPinMap()">
+            <span class="loc-icon">🗺️</span>
+            <div>
+              <div>Drop a pin on the map</div>
+              <div class="loc-sub">Tap anywhere on the map to set your start</div>
+            </div>
+          </button>
+          <button class="loc-btn" id="loc-type" onclick="showTypeInput()">
+            <span class="loc-icon">⌨️</span>
+            <div>
+              <div>Type it in</div>
+              <div class="loc-sub">Hotel name, neighbourhood, or address</div>
+            </div>
+          </button>
+        </div>
+        <div id="pin-map"></div>
+        <div class="map-hint" id="map-hint">Tap on the map to drop your pin</div>
+        <input type="text" id="hotel" placeholder="Hotel name, neighbourhood or address..." autocomplete="off" style="display:none;margin-top:10px;" />
+        <div id="location-confirmed" style="display:none;margin-top:10px;font-size:13px;color:var(--green-dark);background:var(--green-light);padding:10px 12px;border-radius:8px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Travel dates (optional)</label>
+          <input type="text" id="dates" placeholder="e.g. Aug 21–24, 2026" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">What's your vibe?</div>
+        <div class="pill-group" id="vibes">
+          <div class="pill active" data-val="Old Town history and architecture">History & architecture</div>
+          <div class="pill" data-val="Food, markets and local life">Food & markets</div>
+          <div class="pill active" data-val="Hidden gems off the tourist trail">Hidden gems</div>
+          <div class="pill" data-val="Art and culture">Art & culture</div>
+          <div class="pill" data-val="Dark history and untold stories">Dark history</div>
+          <div class="pill" data-val="Nature and parks">Nature & parks</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Walking stamina</div>
+        <div class="pill-group" id="stamina">
+          <div class="pill" data-val="easy 2-hour stroll">Easy 2h stroll</div>
+          <div class="pill active" data-val="solid half-day, 10,000 steps">Half-day (10k steps)</div>
+          <div class="pill" data-val="full day adventure, 15,000+ steps">Full day (15k+ steps)</div>
+        </div>
+      </div>
+
+      <button class="btn" id="gen-btn" onclick="generateTour(null)">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+        Build my tour
+      </button>
+    </div>
+
+    <!-- OUTPUT -->
+    <div class="output" id="output-section">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="pdf-header" id="pdf-header">
+        <div class="pdf-logo">Travel<span>ens</span></div>
+        <div class="pdf-tagline">GPS for the wandering soul</div>
+        <div class="pdf-city" id="pdf-city"></div>
+        <div class="pdf-date" id="pdf-date"></div>
+      </div>
+      <div class="download-bar" id="download-bar" style="display:none;">
+        <button class="dl-btn" onclick="startAudioGuide()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          Audio
+        </button>
+        <button class="dl-btn" onclick="downloadPDF()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          PDF
+        </button>
+        <button class="dl-btn" id="maps-btn" onclick="openMaps()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Maps
+        </button>
+        <button class="dl-btn" id="copy-btn" onclick="copyTour()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <button class="dl-btn" id="save-btn" onclick="saveTour()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Save
+        </button>
+        <button class="dl-btn" id="share-btn" onclick="shareTour()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+      </div>
+      <div class="audio-bar" id="audio-bar">
+        <div class="audio-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          Audio Guide
+        </div>
+        <div class="audio-progress"><div class="audio-progress-fill" id="audio-progress-fill" style="width:0%"></div></div>
+        <div class="audio-stop" id="audio-stop-label">Ready to play</div>
+        <div class="audio-controls">
+          <button class="audio-btn primary" id="audio-play-btn" onclick="toggleAudio()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>Play
+          </button>
+          <button class="audio-btn" id="audio-next-btn" onclick="nextStop()" disabled>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>Next
+          </button>
+          <button class="audio-btn" onclick="stopAudio()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Stop
+          </button>
+        </div>
+      </div>
+      <div id="output-content"></div>
+      <button class="reset-btn" onclick="resetApp()">↩ Plan another tour</button>
+    </div>
+
+    <!-- MY TOURS SCREEN -->
+    <div id="my-tours-screen" style="display:none;">
+      <button class="back-btn" onclick="hideMyTours()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="mode-title">My Saved Tours</div>
+      <div class="mode-subtitle" id="my-tours-subtitle">Your tours saved on this device</div>
+      <div id="saved-tours-list"></div>
+    </div>
+
+  </div><!-- end main-app -->
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ── PILLS ────────────────────────────────────────────────────────
+  document.querySelectorAll('.pill-group').forEach(g => {
+    g.querySelectorAll('.pill').forEach(p => {
+      p.addEventListener('click', () => p.classList.toggle('active'));
+    });
+  });
+  function getSelected(id) {
+    return [...document.querySelectorAll(`#${id} .pill.active`)].map(p => p.dataset.val).join(', ');
+  }
+
+  // ── GREETING ─────────────────────────────────────────────────────
+  const firstGreetings = [
+    "Before we start — what shall I call you, wandering soul?",
+    "Every great journey starts with a name. What's yours?",
+    "Welcome! I'm Travelens. And you are...?"
+  ];
+  const returnGreetings = [
+    n => `Welcome back, ${n}! Where is your heart leading you today?`,
+    n => `${n}! The wandering soul returns. Where to next?`,
+    n => `Hey ${n}! Ready for another adventure?`,
+    n => `Good to see you again, ${n}. What city is calling you?`,
+    n => `${n}! Your next story starts here. Where are we going?`
+  ];
+  function showMainApp(name) {
+    document.getElementById('greeting-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    const g = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
+    document.getElementById('return-greeting').textContent = g(name);
+  }
+  function saveName() {
+    const name = document.getElementById('name-input').value.trim();
+    if (!name) return;
+    localStorage.setItem('travelens_name', name);
+    showMainApp(name);
+  }
+  document.getElementById('name-input').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+  function initGreeting() {
+    const name = localStorage.getItem('travelens_name');
+    if (!name) {
+      document.getElementById('greeting-screen').style.display = 'flex';
+      document.getElementById('greeting-message').textContent = firstGreetings[Math.floor(Math.random() * firstGreetings.length)];
+    } else { showMainApp(name); }
+  }
+
+  // ── NAVIGATION ───────────────────────────────────────────────────
+  let currentStep = 1;
+  function showStep(n) {
+    [1,2,'3a','3b'].forEach(s => {
+      const el = document.getElementById('step' + s);
+      if (el) el.style.display = 'none';
+    });
+    document.getElementById('step' + n).style.display = 'block';
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  function goBack(to) { showStep(to); }
+
+  function goToStep2() {
+    const city = document.getElementById('city').value.trim();
+    if (!city) { document.getElementById('city').focus(); return; }
+    const cityName = city.split(',')[0];
+    document.getElementById('step2-title').textContent = `What would you like to do in ${cityName}?`;
+    document.getElementById('step2-subtitle').textContent = `Choose how you want to explore ${cityName}`;
+    showStep(2);
+  }
+
+  function goToStep3a() {
+    const cityName = document.getElementById('city').value.split(',')[0].trim();
+    document.getElementById('step3a-title').textContent = `Find a tour in ${cityName}`;
+    document.getElementById('link-guruwalk').href = `https://www.guruwalk.com/walks?q=${encodeURIComponent(cityName)}`;
+    document.getElementById('link-freetour').href = `https://www.freetour.com/search?q=${encodeURIComponent(cityName)}`;
+    document.getElementById('link-getyourguide').href = `https://www.getyourguide.com/s/?q=${encodeURIComponent(cityName + ' walking tour')}`;
+    document.getElementById('link-foot').href = `https://www.freetoursbyfoot.com/?s=${encodeURIComponent(cityName)}`;
+    showStep('3a');
+    loadDbTours(cityName);
+  }
+
+  // Load tours — from Upstash cache or generate fresh
+  let toursCache = {}; // in-memory cache per session
+  async function loadDbTours(cityName) {
+    const section = document.getElementById('db-tours-section');
+    const list = document.getElementById('db-tours-list');
+
+    // Show loading state
+    section.style.display = 'block';
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;">
+      <div class="spinner" style="margin:0 auto 10px;border-color:rgba(29,158,117,0.3);border-top-color:var(--green);width:20px;height:20px;"></div>
+      Finding tours in ${cityName}...
+    </div>`;
+
+    // Check in-memory cache first
+    if (toursCache[cityName]) {
+      renderDbTours(toursCache[cityName], cityName);
+      return;
+    }
+
+    // Try live API first
+    try {
+      const res = await fetch('/api/get-tours', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: cityName })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      if (data.tours?.length) {
+        toursCache[cityName] = data.tours;
+        renderDbTours(data.tours, cityName);
+        return;
+      }
+    } catch(e) {
+      console.log('API failed, trying static DB:', e.message);
+    }
+
+    // Fallback — try static tours-db.json
+    try {
+      const res = await fetch('/tours-db.json');
+      const db = await res.json();
+      const cityData = db.cities?.[cityName];
+      if (cityData?.tours?.length) {
+        toursCache[cityName] = cityData.tours;
+        renderDbTours(cityData.tours, cityName);
+        return;
+      }
+    } catch(e) {
+      console.log('Static DB also failed:', e.message);
+    }
+
+    // Nothing found — hide section
+    section.style.display = 'none';
+  }
+
+  function renderDbTours(tours, cityName) {
+    const section = document.getElementById('db-tours-section');
+    const list = document.getElementById('db-tours-list');
+
+    if (!tours?.length) { section.style.display = 'none'; return; }
+
+    section.style.display = 'block';
+    list.innerHTML = tours.map((t, i) => `
+      <div class="tour-db-card" onclick="selectDbTour(${i}, '${cityName}')">
+        <div class="tour-db-header">
+          <span class="tour-db-source" style="background:${t.sourceColor}">${t.source}</span>
+          <div class="tour-db-title">${t.title}</div>
+        </div>
+        <div class="tour-db-meta">
+          <span>⏱ ${t.duration}</span>
+          <span>💰 ${t.price}</span>
+          <span>⭐ ${t.rating} (${t.reviews} reviews)</span>
+          <span>📍 ${t.highlights?.length || 0} stops</span>
+        </div>
+        <div class="tour-db-desc">${t.description}</div>
+        <div class="tour-db-stops">📍 ${(t.highlights || []).slice(0, 5).join(' → ')}${(t.highlights?.length || 0) > 5 ? ' +' + (t.highlights.length - 5) + ' more' : ''}</div>
+        <div class="tour-db-themes">${(t.themes || []).map(th => `<span class="tour-db-theme">${th}</span>`).join('')}</div>
+        <button class="tour-db-btn" onclick="event.stopPropagation();selectDbTour(${i}, '${cityName}')">Build my guide for this tour →</button>
+      </div>
+    `).join('');
+  }
+
+  function selectDbTour(index, cityName) {
+    const tour = toursCache[cityName]?.[index];
+    if (!tour) return;
+    selectedTourContext = tour;
+    generateTour(tour);
+  }
+
+  function goToStep3b() {
+    const cityName = document.getElementById('city').value.split(',')[0].trim();
+    document.getElementById('step3b-subtitle').textContent = `Personalised for ${cityName}`;
+    showStep('3b');
+  }
+
+  // ── CITY AUTOCOMPLETE ────────────────────────────────────────────
+  let cityTimer;
+  async function citySearch(val) {
+    clearTimeout(cityTimer);
+    const dd = document.getElementById('city-dropdown');
+    if (val.length < 2) { dd.style.display = 'none'; return; }
+    cityTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(val)}&count=6&language=en&format=json`);
+        const data = await res.json();
+        if (!data.results?.length) { dd.style.display = 'none'; return; }
+        dd.innerHTML = data.results.map(r =>
+          `<div onclick="selectCity('${r.name}, ${r.country}', ${r.latitude}, ${r.longitude})" style="padding:10px 14px;font-size:14px;cursor:pointer;border-bottom:0.5px solid var(--border);color:var(--text)" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background=''">
+            <span style="font-weight:500">${r.name}</span> <span style="color:var(--text-muted);font-size:12px">${r.admin1 ? r.admin1 + ', ' : ''}${r.country}</span>
+          </div>`
+        ).join('');
+        dd.style.display = 'block';
+      } catch(e) { dd.style.display = 'none'; }
+    }, 300);
+  }
+  let cityLat = null, cityLng = null;
+  function selectCity(val, lat, lng) {
+    document.getElementById('city').value = val;
+    document.getElementById('city-dropdown').style.display = 'none';
+    cityLat = lat; cityLng = lng;
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#city-dropdown') && e.target.id !== 'city')
+      document.getElementById('city-dropdown').style.display = 'none';
+  });
+
+  // ── LOCATION OPTIONS ─────────────────────────────────────────────
+  let userLat = null, userLng = null, userLocationLabel = '';
+  let leafletMap = null, leafletMarker = null;
+
+  function clearLocationSelection() {
+    ['loc-current','loc-pin','loc-type'].forEach(id => document.getElementById(id).classList.remove('active'));
+    document.getElementById('hotel').style.display = 'none';
+    document.getElementById('pin-map').style.display = 'none';
+    document.getElementById('map-hint').style.display = 'none';
+    document.getElementById('location-confirmed').style.display = 'none';
+    userLat = null; userLng = null; userLocationLabel = '';
+  }
+
+  function useCurrentLocation() {
+    clearLocationSelection();
+    document.getElementById('loc-current').classList.add('active');
+    if (!navigator.geolocation) {
+      alert('Geolocation not supported on this device.');
+      return;
+    }
+    const confirmed = document.getElementById('location-confirmed');
+    confirmed.style.display = 'block';
+    confirmed.textContent = '📍 Getting your location...';
+    navigator.geolocation.getCurrentPosition(async pos => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json`);
+        const data = await res.json();
+        userLocationLabel = data.display_name?.split(',').slice(0,2).join(', ') || `${userLat.toFixed(4)}, ${userLng.toFixed(4)}`;
+      } catch(e) { userLocationLabel = 'Your current location'; }
+      confirmed.textContent = `📍 Starting from: ${userLocationLabel}`;
+    }, () => {
+      confirmed.textContent = '⚠️ Could not get location. Please try another option.';
+    });
+  }
+
+  function showPinMap() {
+    clearLocationSelection();
+    document.getElementById('loc-pin').classList.add('active');
+    const mapEl = document.getElementById('pin-map');
+    const hintEl = document.getElementById('map-hint');
+    mapEl.style.display = 'block';
+    hintEl.style.display = 'block';
+
+    const lat = cityLat || 50.0755;
+    const lng = cityLng || 14.4378;
+
+    if (!leafletMap) {
+      leafletMap = L.map('pin-map').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(leafletMap);
+      leafletMap.on('click', async e => {
+        userLat = e.latlng.lat;
+        userLng = e.latlng.lng;
+        if (leafletMarker) leafletMarker.setLatLng(e.latlng);
+        else leafletMarker = L.marker(e.latlng).addTo(leafletMap);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json`);
+          const data = await res.json();
+          userLocationLabel = data.display_name?.split(',').slice(0,2).join(', ') || 'Selected location';
+        } catch(e) { userLocationLabel = 'Selected location'; }
+        const confirmed = document.getElementById('location-confirmed');
+        confirmed.style.display = 'block';
+        confirmed.textContent = `📍 Starting from: ${userLocationLabel}`;
+        hintEl.style.display = 'none';
+      });
+    } else {
+      leafletMap.setView([lat, lng], 13);
+      setTimeout(() => leafletMap.invalidateSize(), 100);
+    }
+  }
+
+  function showTypeInput() {
+    clearLocationSelection();
+    document.getElementById('loc-type').classList.add('active');
+    document.getElementById('hotel').style.display = 'block';
+    document.getElementById('hotel').focus();
+  }
+
+  // ── FREE TOUR URL FLOW ───────────────────────────────────────────
+  let selectedTourContext = null;
+
+  async function buildFromURL() {
+    const url = document.getElementById('tour-url-input').value.trim();
+    const city = document.getElementById('city').value.split(',')[0].trim();
+    if (!url) { document.getElementById('tour-url-input').focus(); return; }
+    const status = document.getElementById('url-status');
+    status.className = 'url-status loading';
+    status.style.display = 'flex';
+    status.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;border-color:rgba(29,158,117,0.3);border-top-color:var(--green);"></div> Reading tour details...';
+    try {
+      const res = await fetch('/api/fetch-tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, city })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      const tour = data.tour;
+      selectedTourContext = tour;
+      status.style.display = 'none';
+      const existing = document.getElementById('tour-preview-box');
+      if (existing) existing.remove();
+      const preview = document.createElement('div');
+      preview.id = 'tour-preview-box';
+      preview.className = 'tour-preview';
+      preview.innerHTML = `
+        <div class="tour-preview-title">✓ ${tour.title}</div>
+        ${tour.fetchBlocked ? `<div style="font-size:11px;color:#C85A00;background:#FFF0E0;padding:6px 10px;border-radius:6px;margin-bottom:8px;">⚠️ This site blocked automatic reading — stops below are AI-inferred from the tour URL. Verify on ${source} if needed.</div>` : ''}
+        <div class="tour-preview-stops">📍 ${tour.highlights?.join(' → ') || tour.description}</div>
+        <button class="tour-preview-btn" onclick="selectFoundTour()">Build my guide for this tour →</button>`;
+      document.getElementById('url-status').after(preview);
+    } catch(err) {
+      status.className = 'url-status error';
+      status.style.display = 'block';
+      status.textContent = 'Could not read that URL. Try pasting a different link, or build an AI tour below.';
+    }
+  }
+
+  document.getElementById('tour-url-input').addEventListener('keydown', e => { if (e.key === 'Enter') buildFromURL(); });
+
+  function selectFoundTour() {
+    generateTour(selectedTourContext);
+  }
+
+  // ── RESET ────────────────────────────────────────────────────────
+  function resetApp() {
+    window.speechSynthesis.cancel();
+    audioPlaying = false; audioSegments = [];
+    document.getElementById('audio-bar').classList.remove('visible');
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('output-content').innerHTML = '';
+    document.getElementById('download-bar').style.display = 'none';
+    document.getElementById('progress-fill').style.width = '0%';
+    rawTourText = ''; stopNames = []; selectedTourContext = null;
+    clearLocationSelection();
+    document.getElementById('city').value = '';
+    document.getElementById('dates').value = '';
+    document.getElementById('hotel').value = '';
+    document.getElementById('tour-url-input').value = '';
+    const existing = document.getElementById('tour-preview-box');
+    if (existing) existing.remove();
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg> Build my tour';
+    showStep(1);
+  }
+
+  // ── PDF & COPY ───────────────────────────────────────────────────
+  let rawTourText = '', currentCity = '', stopNames = [];
+
+  function downloadPDF() {
+    document.getElementById('pdf-city').textContent = currentCity + ' Walking Tour';
+    document.getElementById('pdf-date').textContent = 'Generated by Travelens · travelens-ten.vercel.app · ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    window.print();
+  }
+
+  async function copyTour() {
+    try {
+      await navigator.clipboard.writeText(rawTourText);
+      const btn = document.getElementById('copy-btn');
+      btn.classList.add('copied');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Done!`;
+      setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`; }, 2500);
+    } catch(e) { alert('Could not copy — please select and copy manually.'); }
+  }
+
+  function openMaps() {
+    if (!stopNames.length) return;
+    const city = currentCity.split(',')[0];
+    const waypoints = stopNames.map(s => encodeURIComponent(s + ', ' + city));
+    const url = waypoints.length === 1
+      ? `https://www.google.com/maps/search/${waypoints[0]}`
+      : `https://www.google.com/maps/dir/${waypoints.join('/')}`;
+    window.open(url, '_blank');
+  }
+
+  // ── RENDER OUTPUT ────────────────────────────────────────────────
+  function renderOutput(text, city, preservedStops) {
+    rawTourText = text; currentCity = city; stopNames = [];
+    const content = document.getElementById('output-content');
+    content.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'tour-header';
+    header.innerHTML = `<div class="tour-title">Your ${city} tour</div><div class="ai-badge">AI guide</div>`;
+    content.appendChild(header);
+    const lines = text.split('\n').filter(l => l.trim());
+    let currentStop = null, inTidbits = false;
+    lines.forEach(line => {
+      const l = line.trim();
+      if (l.startsWith('TIP:')) {
+        inTidbits = false;
+        const tip = document.createElement('div');
+        tip.className = 'tip-box';
+        tip.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>${l.replace('TIP:', '').trim()}</span>`;
+        content.appendChild(tip);
+      } else if (/^STOP\s*\d+/i.test(l)) {
+        inTidbits = false;
+        currentStop = document.createElement('div');
+        currentStop.className = 'stop-card';
+        const match = l.match(/STOP\s*(\d+)[:\-\s]+(.+?)(?:\s*\|\s*(.+))?$/i);
+        if (match) {
+          stopNames.push(match[2].trim());
+          const sh = document.createElement('div');
+          sh.className = 'stop-header';
+          sh.innerHTML = `<div class="stop-num">${match[1]}</div><div class="stop-name">${match[2].trim()}</div>${match[3] ? `<div class="stop-time">${match[3].trim()}</div>` : ''}`;
+          currentStop.appendChild(sh);
+        }
+        content.appendChild(currentStop);
+      } else if (/^TIDBIT/i.test(l)) {
+        inTidbits = true;
+        if (currentStop) { const tl = document.createElement('div'); tl.className = 'tidbits-label'; tl.textContent = '✦ Tour guide tidbits'; currentStop.appendChild(tl); }
+      } else if (/^WALK:/i.test(l)) {
+        inTidbits = false;
+        const w = document.createElement('div');
+        w.className = 'walk-note';
+        w.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="4" r="2"/><path d="M9 12l2 2 4-4M7 14l-2 5h14l-2-5"/></svg>${l.replace(/^WALK:/i, '').trim()}`;
+        if (currentStop) currentStop.appendChild(w);
+      } else if (/^[-*•]\s/.test(l)) {
+        const txt = l.replace(/^[-*•]\s*/, '');
+        if (inTidbits && currentStop) { const td = document.createElement('div'); td.className = 'tidbit'; td.textContent = txt; currentStop.appendChild(td); }
+        else if (currentStop) { const p = document.createElement('div'); p.className = 'stop-desc'; p.textContent = txt; currentStop.appendChild(p); }
+      } else if (l.length > 15) {
+        if (currentStop && !inTidbits) { const existing = currentStop.querySelector('.stop-desc'); if (existing) { existing.textContent += ' ' + l; } else { const p = document.createElement('div'); p.className = 'stop-desc'; p.textContent = l; currentStop.appendChild(p); } }
+        else if (inTidbits && currentStop) { const td = document.createElement('div'); td.className = 'tidbit'; td.textContent = l; currentStop.appendChild(td); }
+      }
+    });
+    document.getElementById('download-bar').style.display = 'flex';
+    // If text parsing yielded no stops, use preserved stops (for saved tours)
+    if (stopNames.length === 0 && preservedStops?.length) {
+      stopNames = preservedStops;
+    }
+  }
+
+  // ── GENERATE TOUR ────────────────────────────────────────────────
+  async function generateTour(tourContext) {
+    const city = document.getElementById('city').value.trim();
+    const hotel = userLocationLabel || document.getElementById('hotel').value.trim();
+    const dates = document.getElementById('dates').value.trim();
+    const vibes = getSelected('vibes');
+    const stamina = getSelected('stamina');
+    if (!city) { showStep(1); return; }
+
+    const btn = document.getElementById('gen-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Building your tour...';
+
+    // Hide all steps, show output
+    [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+    document.getElementById('output-section').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const fill = document.getElementById('progress-fill');
+    let prog = 0;
+    const ticker = setInterval(() => { prog = Math.min(prog + Math.random() * 7, 85); fill.style.width = prog + '%'; }, 400);
+
+    try {
+      const res = await fetch('/api/tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city, hotel, dates, vibes, stamina, tourContext: tourContext || null })
+      });
+      const data = await res.json();
+      clearInterval(ticker);
+      fill.style.width = '100%';
+      if (data.error) throw new Error(data.error);
+      setTimeout(() => renderOutput(data.tour || '', city), 400);
+    } catch (err) {
+      clearInterval(ticker);
+      document.getElementById('output-content').innerHTML = `<div class="error-box"><strong>Could not generate tour.</strong><br>${err.message || 'Check your connection and try again.'}</div>`;
+      btn.disabled = false;
+      btn.innerHTML = 'Try again';
+    }
+  }
+
+  // ── AUDIO GUIDE ──────────────────────────────────────────────────
+  let audioSegments = [], audioIndex = 0, audioPlaying = false;
+
+  function buildAudioSegments(text) {
+    const segments = [];
+    const lines = text.split('\n').filter(l => l.trim());
+    let stopNum = 0, stopName = '', desc = '', tidbits = [], walk = '', inTidbits = false;
+    function flushStop() {
+      if (!stopName) return;
+      let seg = `Stop ${stopNum}. ${stopName}. `;
+      if (desc) seg += desc + ' ';
+      if (tidbits.length) { seg += 'Tour guide tidbits. '; tidbits.forEach(t => { seg += t + '. '; }); }
+      if (walk) seg += walk + '.';
+      segments.push(seg.trim());
+      stopName = ''; desc = ''; tidbits = []; walk = ''; inTidbits = false;
+    }
+    lines.forEach(line => {
+      const l = line.trim();
+      if (/^STOP\s*\d+/i.test(l)) { flushStop(); stopNum++; const m = l.match(/STOP\s*\d+[:\-\s]+(.+?)(?:\s*\|.*)?$/i); stopName = m ? m[1].trim() : ''; inTidbits = false; }
+      else if (/^TIDBIT/i.test(l)) { inTidbits = true; }
+      else if (/^WALK:/i.test(l)) { walk = l.replace(/^WALK:/i, '').trim(); inTidbits = false; }
+      else if (/^TIP:/i.test(l)) { flushStop(); segments.push('Travel tip. ' + l.replace(/^TIP:/i, '').trim()); }
+      else if (/^[-*•]\s/.test(l)) { if (inTidbits) tidbits.push(l.replace(/^[-*•]\s*/, '')); }
+      else if (l.length > 15 && !inTidbits && stopName) { desc += l + ' '; }
+    });
+    flushStop();
+    return segments;
+  }
+
+  function startAudioGuide() {
+    if (!rawTourText) return;
+    audioSegments = buildAudioSegments(rawTourText);
+    audioIndex = 0; audioPlaying = false;
+    document.getElementById('audio-bar').classList.add('visible');
+    document.getElementById('audio-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateAudioUI();
+    playCurrentSegment();
+  }
+
+  function updateAudioUI() {
+    const total = audioSegments.length;
+    document.getElementById('audio-progress-fill').style.width = (total ? (audioIndex / total) * 100 : 0) + '%';
+    document.getElementById('audio-stop-label').textContent = audioIndex < total ? `Stop ${audioIndex + 1} of ${total}` : 'Tour complete';
+    document.getElementById('audio-next-btn').disabled = audioIndex >= total - 1;
+  }
+
+  function playCurrentSegment() {
+    if (audioIndex >= audioSegments.length) {
+      document.getElementById('audio-stop-label').textContent = '✓ Tour complete';
+      document.getElementById('audio-play-btn').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play again';
+      audioPlaying = false; return;
+    }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(audioSegments[audioIndex]);
+    utt.rate = 0.92; utt.pitch = 1; utt.lang = 'en-US';
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.name.includes('Samantha') || v.name.includes('Google US English') || (v.lang === 'en-US' && v.localService));
+    if (preferred) utt.voice = preferred;
+    utt.onend = () => { if (audioPlaying) { audioIndex++; updateAudioUI(); setTimeout(() => playCurrentSegment(), 800); } };
+    utt.onerror = () => { audioPlaying = false; };
+    audioPlaying = true;
+    window.speechSynthesis.speak(utt);
+    updateAudioUI();
+    document.getElementById('audio-play-btn').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause';
+  }
+
+  function toggleAudio() {
+    if (audioPlaying) { window.speechSynthesis.pause(); audioPlaying = false; document.getElementById('audio-play-btn').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Resume'; }
+    else { if (window.speechSynthesis.paused) { window.speechSynthesis.resume(); audioPlaying = true; document.getElementById('audio-play-btn').innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause'; } else { if (audioSegments.length === 0) startAudioGuide(); else playCurrentSegment(); } }
+  }
+
+  function nextStop() { window.speechSynthesis.cancel(); audioIndex++; updateAudioUI(); setTimeout(() => playCurrentSegment(), 300); }
+  function stopAudio() { window.speechSynthesis.cancel(); audioPlaying = false; audioIndex = 0; audioSegments = []; document.getElementById('audio-bar').classList.remove('visible'); }
+
+  // ── MY TOURS ─────────────────────────────────────────────────────
+  const TOURS_KEY = 'travelens_saved_tours';
+
+  function getSavedTours() {
+    try { return JSON.parse(localStorage.getItem(TOURS_KEY) || '[]'); }
+    catch(e) { return []; }
+  }
+
+  function saveTours(tours) {
+    localStorage.setItem(TOURS_KEY, JSON.stringify(tours));
+    updateToursCount();
+  }
+
+  function updateToursCount() {
+    const tours = getSavedTours();
+    const trigger = document.getElementById('my-tours-trigger');
+    const count = document.getElementById('tours-count');
+    if (tours.length > 0) {
+      trigger.style.display = 'inline-flex';
+      count.textContent = tours.length;
+    } else {
+      trigger.style.display = 'none';
+    }
+  }
+
+  function saveTour() {
+    if (!rawTourText || !currentCity) return;
+    const tours = getSavedTours();
+
+    // Check if already saved
+    const exists = tours.find(t => t.city === currentCity && t.text === rawTourText);
+    if (exists) { showToast('Already saved!'); return; }
+
+    const tour = {
+      id: Date.now(),
+      city: currentCity,
+      text: rawTourText,
+      stops: stopNames,
+      savedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      source: selectedTourContext?.source || 'AI Tour',
+      tourTitle: selectedTourContext?.title || `${currentCity} AI Tour`
+    };
+
+    tours.unshift(tour); // newest first
+    saveTours(tours);
+
+    // Update save button
+    const btn = document.getElementById('save-btn');
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Saved!`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save`;
+    }, 2500);
+
+    showToast('Tour saved! ✓');
+  }
+
+  function showToast(msg) {
+    let toast = document.getElementById('save-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'save-toast';
+      toast.className = 'save-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  function showMyTours() {
+    // Hide all steps and output
+    ['step1','step2','step3a','step3b','output-section'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('my-tours-screen').style.display = 'block';
+    renderSavedTours();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideMyTours() {
+    document.getElementById('my-tours-screen').style.display = 'none';
+    showStep(1);
+  }
+
+  function renderSavedTours() {
+    const tours = getSavedTours();
+    const list = document.getElementById('saved-tours-list');
+    const subtitle = document.getElementById('my-tours-subtitle');
+
+    if (!tours.length) {
+      subtitle.textContent = '';
+      list.innerHTML = `
+        <div class="no-tours">
+          <div class="no-tours-icon">🗺️</div>
+          <div class="no-tours-title">No saved tours yet</div>
+          <div class="no-tours-sub">Generate a tour and tap Save to keep it here</div>
+        </div>`;
+      return;
+    }
+
+    subtitle.textContent = `${tours.length} tour${tours.length > 1 ? 's' : ''} saved on this device`;
+    list.innerHTML = tours.map(t => `
+      <div class="saved-tour-card">
+        <div class="saved-tour-header">
+          <div>
+            <div class="saved-tour-city">${t.city}</div>
+          </div>
+          <button class="saved-tour-delete" onclick="deleteTour(${t.id})" title="Delete">×</button>
+        </div>
+        <div class="saved-tour-meta">
+          <span>📅 ${t.savedAt}</span>
+          <span>🏷️ ${t.source}</span>
+          <span>📍 ${t.stops?.length || 0} stops</span>
+        </div>
+        <div class="saved-tour-stops">${t.stops?.join(' → ') || t.tourTitle}</div>
+        <div class="saved-tour-actions">
+          <button class="saved-action-btn primary" onclick="openSavedTour(${t.id})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Open tour
+          </button>
+          <button class="saved-action-btn" onclick="openSavedMaps(${t.id})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Maps
+          </button>
+          <button class="saved-action-btn" onclick="printSavedTour(${t.id})">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            PDF
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function deleteTour(id) {
+    const tours = getSavedTours().filter(t => t.id !== id);
+    saveTours(tours);
+    renderSavedTours();
+    if (!tours.length) updateToursCount();
+  }
+
+  function openSavedTour(id) {
+    const tour = getSavedTours().find(t => t.id === id);
+    if (!tour) return;
+
+    // Hide everything else
+    document.getElementById('my-tours-screen').style.display = 'none';
+    document.getElementById('hero') && (document.getElementById('hero').style.display = 'none');
+    [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+
+    // Show output
+    const outputSection = document.getElementById('output-section');
+    outputSection.classList.add('visible');
+    outputSection.style.display = 'block';
+
+    // Clear and render
+    document.getElementById('output-content').innerHTML = '';
+    document.getElementById('progress-fill').style.width = '100%';
+
+    // Set globals so Maps/PDF/Audio work
+    rawTourText = tour.text;
+    currentCity = tour.city;
+    stopNames = tour.stops || [];
+
+    // Render the tour content
+    renderOutput(tour.text, tour.city, tour.stops || []);
+    document.getElementById('download-bar').style.display = 'flex';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function openSavedMaps(id) {
+    const tour = getSavedTours().find(t => t.id === id);
+    if (!tour?.stops?.length) return;
+    const city = tour.city.split(',')[0];
+    const waypoints = tour.stops.map(s => encodeURIComponent(s + ', ' + city));
+    const url = waypoints.length === 1
+      ? `https://www.google.com/maps/search/${waypoints[0]}`
+      : `https://www.google.com/maps/dir/${waypoints.join('/')}`;
+    window.open(url, '_blank');
+  }
+
+  function printSavedTour(id) {
+    const tour = getSavedTours().find(t => t.id === id);
+    if (!tour) return;
+    rawTourText = tour.text;
+    currentCity = tour.city;
+    stopNames = tour.stops || [];
+    renderOutput(tour.text, tour.city, tour.stops || []);
+    document.getElementById('pdf-city').textContent = tour.city + ' Walking Tour';
+    document.getElementById('pdf-date').textContent = 'Generated by Travelens · travelens-ten.vercel.app · ' + tour.savedAt;
+    setTimeout(() => window.print(), 300);
+  }
+  // ── END MY TOURS ──────────────────────────────────────────────────
+
+  // ── SHARE TOUR ───────────────────────────────────────────────────
+  async function shareTour() {
+    if (!rawTourText || !currentCity) return;
+
+    const btn = document.getElementById('share-btn');
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div>';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/save-tour', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: currentCity,
+          text: rawTourText,
+          stops: stopNames,
+          source: selectedTourContext?.source || 'AI Tour',
+          title: selectedTourContext?.title || `${currentCity} Walking Tour`
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const baseUrl = 'https://travelens-ten.vercel.app';
+      const shareURL = `${baseUrl}/?t=${data.id}`;
+
+      // iPhone native share sheet
+      const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+      if (isMobile && navigator.share) {
+        try {
+          await navigator.share({
+            title: `${currentCity} Walking Tour — Travelens`,
+            text: `I built a walking tour of ${currentCity} — open to see the full guide! 🗺️`,
+            url: shareURL
+          });
+          return;
+        } catch(e) { if (e.name === 'AbortError') return; }
+      }
+
+      // Desktop — clipboard then modal
+      try {
+        await navigator.clipboard.writeText(shareURL);
+        showToast('Link copied! Send it to your travel buddy 📤');
+      } catch(e) {
+        showShareModal(shareURL);
+      }
+
+    } catch(e) {
+      showToast('Could not create share link — ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
+
+  // ── END SHARE TOUR ────────────────────────────────────────────────
+
+  function showShareModal(url) {
+    const existing = document.getElementById('share-modal');
+    if (existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'share-modal';
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:flex-end;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+      <div style="background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:480px;">
+        <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;">Share this tour 🗺️</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Copy this link and send it to anyone</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <input id="share-url-field" type="text" value="${url}" readonly style="flex:1;padding:10px 12px;font-size:12px;border:0.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);outline:none;font-family:inherit;" />
+          <button onclick="copyShareURL()" style="padding:10px 14px;background:var(--green);color:white;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">Copy</button>
+        </div>
+        <button onclick="document.getElementById('share-modal').remove()" style="width:100%;padding:12px;background:var(--bg);color:var(--text-muted);border:0.5px solid var(--border);border-radius:12px;font-size:14px;cursor:pointer;font-family:inherit;">Close</button>
+      </div>`;
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+    setTimeout(() => { const f = document.getElementById('share-url-field'); f?.focus(); f?.select(); }, 100);
+  }
+
+  function copyShareURL() {
+    const field = document.getElementById('share-url-field');
+    field.select();
+    navigator.clipboard.writeText(field.value).then(() => {
+      showToast('Link copied! 📤');
+      setTimeout(() => document.getElementById('share-modal')?.remove(), 1500);
+    }).catch(() => {
+      document.execCommand('copy');
+      showToast('Link copied! 📤');
+      setTimeout(() => document.getElementById('share-modal')?.remove(), 1500);
+    });
+  }
+
+  // ── LOAD SHARED TOUR ─────────────────────────────────────────────
+  async function checkSharedTour() {
+    const params = new URLSearchParams(window.location.search);
+    const shortId = params.get('t');
+    if (!shortId) return false;
+
+    // Show loading state immediately
+    document.getElementById('greeting-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+    const outputSection = document.getElementById('output-section');
+    outputSection.classList.add('visible');
+    document.getElementById('output-content').innerHTML = `
+      <div style="text-align:center;padding:48px 20px;color:var(--text-muted);">
+        <div class="spinner" style="margin:0 auto 12px;width:24px;height:24px;border-color:rgba(29,158,117,0.3);border-top-color:var(--green);"></div>
+        <div style="font-size:14px;">Loading shared tour...</div>
+      </div>`;
+
+    try {
+      const res = await fetch(`/api/load-tour?id=${shortId}`);
+      const tour = await res.json();
+      if (tour.error) throw new Error(tour.error);
+
+      rawTourText = tour.text;
+      currentCity = tour.city;
+      stopNames = tour.stops || [];
+      selectedTourContext = { source: tour.source, title: tour.title, highlights: tour.stops };
+
+      // Banner
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:var(--green-light);border:0.5px solid var(--green);border-radius:12px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--green-dark);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;';
+      banner.innerHTML = `<span>🗺️ <strong>${tour.title || tour.city + ' tour'}</strong> — shared with you</span><button onclick="saveTour();this.textContent='Saved ✓';this.style.opacity='0.6';this.disabled=true;" style="background:var(--green);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;">Save to My Tours</button>`;
+
+      const outputContent = document.getElementById('output-content');
+      outputContent.innerHTML = '';
+      outputSection.insertBefore(banner, outputContent);
+      renderOutput(tour.text, tour.city, tour.stops || []);
+      document.getElementById('download-bar').style.display = 'flex';
+      updateToursCount();
+      window.history.replaceState({}, '', window.location.pathname);
+      return true;
+
+    } catch(e) {
+      document.getElementById('output-content').innerHTML = `<div class="error-box">Could not load shared tour. The link may have expired.</div>`;
+      return true; // Still handled — don't show greeting
+    }
+  }
+
+  function buildSharedTour() { generateTour(selectedTourContext); }
+  // ── END LOAD SHARED TOUR ─────────────────────────────────────────
+
+  // ── INIT ─────────────────────────────────────────────────────────
+  window.addEventListener('load', async () => {
+    updateToursCount();
+    const handled = await checkSharedTour();
+    if (!handled) {
+      initGreeting();
+    }
+  });
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(() => {}); }
+</script>
+</body>
+</html>
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
