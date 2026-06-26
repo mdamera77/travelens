@@ -11,20 +11,23 @@ export default async function handler(req, res) {
   const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
   const cityKey = city.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-  const THEME_KEYS = [
-    'classic-highlights',
-    'hidden-gems-&-local-life',
-    'art-&-architecture',
-    'food-&-markets',
-    'history-&-culture'
+  // Theme names must match seed-cities.js key format exactly
+  // "Art & Architecture" → "art---architecture" (replace(/[^a-z0-9]/g,'-'))
+  const THEMES = [
+    'Classic Highlights',
+    'Hidden Gems & Local Life',
+    'Art & Architecture',
+    'Food & Markets',
+    'History & Culture'
   ];
 
   // ── CHECK THEMED KEYS (from seed-cities) ─────────────────────────
   if (redisUrl && redisToken) {
     const tours = [];
-    for (const theme of THEME_KEYS) {
+    for (const theme of THEMES) {
+      const themeKey = theme.toLowerCase().replace(/[^a-z0-9]/g, '-');
       try {
-        const r = await fetch(`${redisUrl}/get/tours-db:${cityKey}:${theme}`, {
+        const r = await fetch(`${redisUrl}/get/tours-db:${cityKey}:${themeKey}`, {
           headers: { Authorization: `Bearer ${redisToken}` }
         });
         const d = await r.json();
@@ -97,7 +100,8 @@ Sources: GuruWalk (#FF6B35), FreeTour (#2196F3), FreeToursByFoot (#4CAF50), GetY
     if (redisUrl && redisToken) {
       for (const tour of freshTours) {
         const theme = tour.themes?.[0] || 'classic-highlights';
-        const key = `tours-db:${cityKey}:${theme}`;
+        const themeKey = theme.toLowerCase().replace(/[^a-z0-9]/g, '-');
+        const key = `tours-db:${cityKey}:${themeKey}`;
         try {
           await fetch(`${redisUrl}/set/${key}/${encodeURIComponent(JSON.stringify(tour))}/ex/7776000`, {
             headers: { Authorization: `Bearer ${redisToken}` }
