@@ -136,6 +136,10 @@
     .walk-note { font-size: 12px; color: var(--green-dark); margin: 8px 0 0; display: flex; align-items: flex-start; gap: 5px; }
     .tip-box { background: var(--green-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; color: var(--green-dark); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
     .reset-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 6px; font-family: inherit; }
+    .try-again-btn { width: 100%; padding: 13px; background: var(--green-light); color: var(--green-dark); border: 0.5px solid var(--green); border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px; font-family: inherit; }
+    .city-history { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .city-chip { padding: 5px 12px; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
+    .city-chip:hover { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
     .float-home { position: fixed; top: 16px; right: 16px; z-index: 500; background: var(--green); border: none; border-radius: 20px; padding: 8px 14px; font-size: 12px; font-weight: 600; color: white; cursor: pointer; display: none; align-items: center; gap: 6px; box-shadow: 0 2px 12px rgba(29,158,117,0.4); font-family: inherit; -webkit-tap-highlight-color: transparent; }
     .float-home.visible { display: flex; }
     @media print { .float-home { display: none !important; } }
@@ -241,6 +245,7 @@
           <input type="text" id="city" placeholder="Prague, Tokyo, Oaxaca..." autocomplete="off" oninput="citySearch(this.value)" />
           <div id="city-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:0.5px solid var(--border);border-radius:10px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-height:200px;overflow-y:auto;margin-top:4px;"></div>
         </div>
+        <div class="city-history" id="city-history"></div>
       </div>
       <button class="btn" onclick="goToStep2()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -456,7 +461,10 @@
         </div>
       </div>
       <div id="output-content"></div>
-      <button class="reset-btn" onclick="resetApp()">↩ Plan another tour</button>
+      <button class="try-again-btn" id="try-again-btn" onclick="tryAnotherTour()" style="display:none;">
+        🗺️ Try another tour in <span id="try-again-city"></span>
+      </button>
+      <button class="reset-btn" onclick="resetApp()">↩ Choose a different city</button>
     </div>
 
     <!-- MY TOURS SCREEN -->
@@ -653,7 +661,51 @@
     showStep('3b');
   }
 
-  // ── CITY AUTOCOMPLETE ────────────────────────────────────────────
+  // ── CITY HISTORY ─────────────────────────────────────────────────
+  const CITY_HISTORY_KEY = 'travelens_city_history';
+
+  function saveCityToHistory(city) {
+    try {
+      let history = JSON.parse(localStorage.getItem(CITY_HISTORY_KEY) || '[]');
+      history = [city, ...history.filter(c => c !== city)].slice(0, 5);
+      localStorage.setItem(CITY_HISTORY_KEY, JSON.stringify(history));
+      renderCityHistory();
+    } catch(e) {}
+  }
+
+  function renderCityHistory() {
+    const container = document.getElementById('city-history');
+    if (!container) return;
+    try {
+      const history = JSON.parse(localStorage.getItem(CITY_HISTORY_KEY) || '[]');
+      if (!history.length) { container.innerHTML = ''; return; }
+      container.innerHTML = history.map(c =>
+        `<div class="city-chip" onclick="selectCityFromHistory('${c.replace(/'/g, "\\'")}')">${c.split(',')[0]}</div>`
+      ).join('');
+    } catch(e) {}
+  }
+
+  function selectCityFromHistory(city) {
+    document.getElementById('city').value = city;
+    document.getElementById('city-dropdown').style.display = 'none';
+    goToStep2();
+  }
+
+  // ── TRY ANOTHER TOUR ─────────────────────────────────────────────
+  function tryAnotherTour() {
+    window.speechSynthesis.cancel();
+    audioPlaying = false; audioSegments = [];
+    document.getElementById('audio-bar').classList.remove('visible');
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('output-content').innerHTML = '';
+    document.getElementById('download-bar').style.display = 'none';
+    document.getElementById('progress-fill').style.width = '0%';
+    document.getElementById('float-home-btn').classList.remove('visible');
+    document.getElementById('try-again-btn').style.display = 'none';
+    rawTourText = ''; stopNames = []; selectedTourContext = null;
+    // Go back to tour selection for same city
+    goToStep3a();
+  }
   let cityTimer;
   async function citySearch(val) {
     clearTimeout(cityTimer);
@@ -927,6 +979,15 @@
     if (stopNames.length === 0 && preservedStops?.length) {
       stopNames = preservedStops;
     }
+    // Show try another tour button and save city to history
+    const cityName = city.split(',')[0];
+    const tryBtn = document.getElementById('try-again-btn');
+    const tryCitySpan = document.getElementById('try-again-city');
+    if (tryBtn && tryCitySpan) {
+      tryCitySpan.textContent = cityName;
+      tryBtn.style.display = 'block';
+    }
+    saveCityToHistory(city);
   }
 
   // ── GENERATE TOUR ────────────────────────────────────────────────
@@ -1401,6 +1462,7 @@
   // ── INIT ─────────────────────────────────────────────────────────
   window.addEventListener('load', async () => {
     updateToursCount();
+    renderCityHistory();
     const handled = await checkSharedTour();
     if (!handled) {
       initGreeting();
