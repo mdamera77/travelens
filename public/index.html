@@ -138,10 +138,9 @@
     .tidbits-body.collapsed { max-height: 0; }
     .tidbits-body.expanded { max-height: 600px; }
 
-    /* Walking mode — collapse descriptions */
-    .walking-mode .stop-desc { display: none; }
-    .walking-mode .stop-desc:first-of-type { display: block; }
-    .walking-mode .tidbit { font-size: 12px; padding: 5px 8px; }
+    /* Walking mode — only collapse tidbits, description always shows */
+    .walking-mode .tidbits-body { max-height: 0; overflow: hidden; }
+    .walking-mode .tidbits-toggle-arrow { transform: rotate(0deg); }
 
     .quick-info-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding: 12px 14px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); }
     .qi-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
