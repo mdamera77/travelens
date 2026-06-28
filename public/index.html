@@ -197,11 +197,22 @@
     .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.35); border-top-color: white; border-radius: 50%; animation: spin 0.75s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Download bar */
-    .download-bar { display: flex; gap: 8px; margin-bottom: 14px; }
-    .dl-btn { flex: 1; padding: 11px 5px; border: 0.5px solid var(--border); border-radius: 12px; background: var(--card); color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.15s; font-family: inherit; }
+    /* Redesigned action bar */
+    .download-bar { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .dl-row-primary { display: flex; gap: 8px; }
+    .dl-row-secondary { display: flex; gap: 6px; }
+    .dl-btn-primary { flex: 1; padding: 12px 8px; border: none; border-radius: 12px; background: var(--green); color: white; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s; font-family: inherit; }
+    .dl-btn-primary:hover { opacity: 0.9; }
+    .dl-btn { flex: 1; padding: 9px 4px; border: 0.5px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 3px; transition: all 0.15s; font-family: inherit; }
     .dl-btn:hover { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
     .dl-btn.copied { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+
+    /* Stop progress indicator */
+    .stop-progress { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: var(--text-muted); }
+    .stop-progress-dots { display: flex; gap: 4px; flex-wrap: wrap; }
+    .stop-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.2s; }
+    .stop-dot.done { background: var(--green); }
+    .stop-dot.current { background: var(--green); box-shadow: 0 0 0 2px var(--green-light); }
 
     /* Audio */
     .audio-bar { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; display: none; }
@@ -471,30 +482,36 @@
         <div class="pdf-date" id="pdf-date"></div>
       </div>
       <div class="download-bar" id="download-bar" style="display:none;">
-        <button class="dl-btn" onclick="startAudioGuide()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          Audio
-        </button>
-        <button class="dl-btn" onclick="downloadPDF()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          PDF
-        </button>
-        <button class="dl-btn" id="maps-btn" onclick="openMaps()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-          Maps
-        </button>
-        <button class="dl-btn" id="copy-btn" onclick="copyTour()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy
-        </button>
-        <button class="dl-btn" id="save-btn" onclick="saveTour()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          Save
-        </button>
-        <button class="dl-btn" id="share-btn" onclick="shareTour()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Share
-        </button>
+        <!-- Primary actions -->
+        <div class="dl-row-primary">
+          <button class="dl-btn-primary" onclick="startAudioGuide()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            Audio guide
+          </button>
+          <button class="dl-btn-primary" id="maps-btn" onclick="openMaps()" style="background:var(--green-dark);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Open in Maps
+          </button>
+        </div>
+        <!-- Secondary actions -->
+        <div class="dl-row-secondary">
+          <button class="dl-btn" onclick="downloadPDF()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            PDF
+          </button>
+          <button class="dl-btn" id="copy-btn" onclick="copyTour()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button class="dl-btn" id="save-btn" onclick="saveTour()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save
+          </button>
+          <button class="dl-btn" id="share-btn" onclick="shareTour()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share
+          </button>
+        </div>
       </div>
       <!-- Try another tour — sits right below the action bar -->
       <button class="try-again-btn" id="try-again-btn" onclick="tryAnotherTour()" style="display:none;">
@@ -892,6 +909,23 @@
     catch(e) { stopProgress = {}; }
   }
 
+  function updateStopProgressDots(city) {
+    if (!stopNames.length) return;
+    const doneCount = stopNames.filter((_, i) =>
+      stopProgress[`${city || currentCity}:${i+1}`]
+    ).length;
+    const label = document.getElementById('stop-progress-label');
+    if (label) label.textContent = doneCount === stopNames.length
+      ? `All ${stopNames.length} stops done ✓`
+      : `Stop ${doneCount + 1} of ${stopNames.length}`;
+    stopNames.forEach((_, i) => {
+      const dot = document.getElementById(`stop-dot-${i+1}`);
+      if (!dot) return;
+      const isDone = stopProgress[`${currentCity}:${i+1}`];
+      dot.className = 'stop-dot' + (isDone ? ' done' : (i === doneCount ? ' current' : ''));
+    });
+  }
+
   function toggleStopDone(city, stopNum, btn) {
     const key = `${city}:${stopNum}`;
     stopProgress[key] = !stopProgress[key];
@@ -917,6 +951,7 @@
       nameEl.style.opacity = '';
       btn.textContent = '✓';
     }
+    updateStopProgressDots(city);
   }
 
   // ── OFFLINE DETECTION ─────────────────────────────────────────────
@@ -1362,6 +1397,23 @@
     tourIsReady = true;
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.textContent = '↩ Choose a different city';
+
+    // Build stop progress indicator
+    if (stopNames.length > 0) {
+      const existingProg = document.getElementById('stop-progress-bar');
+      if (existingProg) existingProg.remove();
+      const prog = document.createElement('div');
+      prog.className = 'stop-progress';
+      prog.id = 'stop-progress-bar';
+      prog.innerHTML = `
+        <span id="stop-progress-label">Stop 1 of ${stopNames.length}</span>
+        <div class="stop-progress-dots">
+          ${stopNames.map((_, i) => `<div class="stop-dot${i === 0 ? ' current' : ''}" id="stop-dot-${i+1}"></div>`).join('')}
+        </div>`;
+      const downloadBar = document.getElementById('download-bar');
+      if (downloadBar) downloadBar.after(prog);
+      updateStopProgressDots(city);
+    }
 
     // Update personal prompt copy now tour is ready
     if (prompt && selectedTourContext?.source && selectedTourContext.source !== 'AI Tour') {
