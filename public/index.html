@@ -123,6 +123,11 @@
     .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
     /* Meeting point bar */
+    /* Quick info bar */
+    .quick-info-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding: 12px 14px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); }
+    .qi-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .qi-item strong { color: var(--text); font-weight: 600; }
+
     .meeting-point-bar { background: var(--green-light); border: 0.5px solid var(--green); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .mp-info { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; }
     .mp-icon { font-size: 18px; flex-shrink: 0; }
@@ -696,6 +701,48 @@
       tryAnotherTour(); // Still loading — go back to tour list
     }
   }
+  // ── QUICK INFO BAR ────────────────────────────────────────────────
+  function buildQuickInfoBar(city, tourContext) {
+    const items = [];
+
+    // Duration from tour context or default
+    const duration = tourContext?.duration || '2–2.5 hours';
+    items.push({ icon: '⏱', label: duration });
+
+    // Best time — infer from themes and title
+    const themes = tourContext?.themes || [];
+    const title = (tourContext?.title || '').toLowerCase();
+    let bestTime = 'Before 10am';
+    if (themes.includes('food---markets') || title.includes('food') || title.includes('market')) {
+      bestTime = '9–11am (markets freshest)';
+    } else if (title.includes('night') || title.includes('dark') || title.includes('evening')) {
+      bestTime = 'After 6pm';
+    } else if (title.includes('castle') || title.includes('palace')) {
+      bestTime = 'Before 9:30am (beat queues)';
+    }
+    items.push({ icon: '☀️', label: bestTime });
+
+    // Footwear
+    const stops = (tourContext?.highlights || []).join(' ').toLowerCase();
+    const footwear = stops.includes('hill') || stops.includes('castle') || city.toLowerCase().includes('edinburgh')
+      ? 'Sturdy flat shoes' : 'Comfortable walking shoes';
+    items.push({ icon: '👟', label: footwear });
+
+    // Scarf for religious sites
+    const needsScarf = stops.includes('synagogue') || stops.includes('mosque') || stops.includes('cathedral') || stops.includes('church');
+    if (needsScarf) items.push({ icon: '🧣', label: 'Scarf (religious sites)' });
+
+    // Water
+    const hotCities = ['bangkok','marrakech','cairo','bali','havana','cartagena','rio','hanoi','seville'];
+    const isHot = hotCities.some(c => city.toLowerCase().includes(c));
+    items.push({ icon: '💧', label: isHot ? 'Water + sunscreen' : 'Water bottle' });
+
+    const bar = document.createElement('div');
+    bar.className = 'quick-info-bar';
+    bar.innerHTML = items.map(i => `<div class="qi-item">${i.icon} <strong>${i.label}</strong></div>`).join('');
+    return bar;
+  }
+
   function getDirectionsToMeetingPoint(meetingPoint) {
     const encoded = encodeURIComponent(meetingPoint);
     // Opens Maps with directions from current location to meeting point
@@ -1050,6 +1097,10 @@
     header.className = 'tour-header';
     header.innerHTML = `<div class="tour-title">Your ${city} tour</div><div class="ai-badge">AI guide</div>`;
     content.appendChild(header);
+
+    // Quick info bar
+    const qiBar = buildQuickInfoBar(city, selectedTourContext);
+    if (qiBar) content.appendChild(qiBar);
     const lines = text.split('\n').filter(l => l.trim());
     let currentStop = null, inTidbits = false;
     lines.forEach(line => {
