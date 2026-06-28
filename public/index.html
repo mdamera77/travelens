@@ -166,7 +166,7 @@
     .personal-prompt-inner { border-top: 0.5px solid var(--border); padding-top: 20px; text-align: center; }
     .personal-prompt-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .personal-prompt-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; max-width: 300px; margin-left: auto; margin-right: auto; }
-    .personal-prompt-btn { background: var(--amber); color: white; border: none; border-radius: 12px; padding: 13px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; transition: opacity 0.15s; }
+    .personal-prompt-btn { background: #FF6B35; color: white; border: none; border-radius: 12px; padding: 13px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; transition: opacity 0.15s; }
     .personal-prompt-btn:hover { opacity: 0.9; }
     .city-history { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .city-chip { padding: 5px 12px; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
@@ -502,12 +502,14 @@
       </div>
       <div id="output-content"></div>
 
-      <!-- Personal touch prompt — shown after tour renders for DB tours -->
+      <!-- Real guide prompt — shown after tour renders for DB tours -->
       <div class="personal-prompt" id="personal-prompt" style="display:none;">
         <div class="personal-prompt-inner">
-          <div class="personal-prompt-title">Want something more personal?</div>
-          <div class="personal-prompt-text">This tour follows a fixed route with a group. Build one around your interests, pace and starting point instead.</div>
-          <button class="personal-prompt-btn" onclick="personaliseThisTour()">✨ Personalise this tour for me</button>
+          <div class="personal-prompt-title">Want a real local guide?</div>
+          <div class="personal-prompt-text">This tour is available with a qualified local guide — free to join, tip-based. Book your spot directly on the tour site.</div>
+          <button class="personal-prompt-btn" id="personal-prompt-btn" onclick="bookWithRealGuide()">
+            🗺️ Book with a real guide →
+          </button>
         </div>
       </div>
 
@@ -719,26 +721,18 @@
       tryAnotherTour(); // Still loading — go back to tour list
     }
   }
-  function personaliseThisTour() {
-    // Pre-fill city and go to Step 3B (AI tour builder)
-    // City is already set from current tour
-    // Hide output
-    window.speechSynthesis.cancel();
-    audioPlaying = false; audioSegments = [];
-    document.getElementById('audio-bar').classList.remove('visible');
-    document.getElementById('output-section').classList.remove('visible');
-    document.getElementById('output-content').innerHTML = '';
-    document.getElementById('download-bar').style.display = 'none';
-    document.getElementById('progress-fill').style.width = '0%';
-    document.getElementById('float-btns').style.display = 'none';
-    document.getElementById('try-again-btn').style.display = 'none';
-    document.getElementById('personal-prompt').style.display = 'none';
-    rawTourText = ''; stopNames = [];
-    // Keep selectedTourContext for reference but clear it so AI builds fresh
-    selectedTourContext = null;
-    tourIsReady = false;
-    // Go straight to AI tour builder with city pre-filled
-    goToStep3b();
+  function bookWithRealGuide() {
+    if (!selectedTourContext) return;
+    // Use stored URL if available, otherwise link to source search for city
+    const url = selectedTourContext.url ||
+      (selectedTourContext.source === 'GuruWalk'
+        ? `https://www.guruwalk.com/walks?q=${encodeURIComponent(currentCity.split(',')[0])}`
+        : selectedTourContext.source === 'FreeTour'
+        ? `https://www.freetour.com/search?q=${encodeURIComponent(currentCity.split(',')[0])}`
+        : selectedTourContext.source === 'GetYourGuide'
+        ? `https://www.getyourguide.com/s/?q=${encodeURIComponent(currentCity.split(',')[0] + ' walking tour')}`
+        : `https://www.freetoursbyfoot.com/?s=${encodeURIComponent(currentCity.split(',')[0])}`);
+    window.open(url, '_blank');
   }
   function buildQuickInfoBar(city, tourContext) {
     const items = [];
@@ -1210,11 +1204,19 @@
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.textContent = '↩ Choose a different city';
 
-    // Show personal prompt only for DB/real tours (not AI-generated ones)
+    // Show real guide prompt only for DB/real tours
     const prompt = document.getElementById('personal-prompt');
-    if (prompt) {
-      prompt.style.display = selectedTourContext?.source && selectedTourContext.source !== 'AI Tour'
-        ? 'block' : 'none';
+    const promptBtn = document.getElementById('personal-prompt-btn');
+    if (prompt && selectedTourContext?.source && selectedTourContext.source !== 'AI Tour') {
+      const source = selectedTourContext.source;
+      const color = selectedTourContext.sourceColor || '#FF6B35';
+      if (promptBtn) {
+        promptBtn.style.background = color;
+        promptBtn.textContent = `Book with a real guide on ${source} →`;
+      }
+      prompt.style.display = 'block';
+    } else if (prompt) {
+      prompt.style.display = 'none';
     }
   }
 
