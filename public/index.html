@@ -488,7 +488,7 @@
         </div>
       </div>
       <div id="output-content"></div>
-      <button class="reset-btn" onclick="resetApp()">↩ Choose a different city</button>
+      <button class="reset-btn" id="reset-btn" onclick="handleResetBtn()">↩ Choose a different tour</button>
     </div>
 
     <!-- MY TOURS SCREEN -->
@@ -687,7 +687,15 @@
     showStep('3b');
   }
 
-  // ── MEETING POINT DIRECTIONS ─────────────────────────────────────
+  // ── RESET BUTTON — context aware ─────────────────────────────────
+  let tourIsReady = false;
+  function handleResetBtn() {
+    if (tourIsReady) {
+      resetApp(); // Tour is done — go back to city selection
+    } else {
+      tryAnotherTour(); // Still loading — go back to tour list
+    }
+  }
   function getDirectionsToMeetingPoint(meetingPoint) {
     const encoded = encodeURIComponent(meetingPoint);
     // Opens Maps with directions from current location to meeting point
@@ -1025,9 +1033,9 @@
       mpBanner.className = 'meeting-point-bar';
       mpBanner.innerHTML = `
         <div class="mp-info">
-          <span class="mp-icon">📍</span>
+          <span class="mp-icon">🚩</span>
           <div>
-            <div class="mp-label">Meeting point</div>
+            <div class="mp-label">Tour starts here</div>
             <div class="mp-address">${mp}</div>
           </div>
         </div>
@@ -1107,6 +1115,9 @@
       tryBtn.style.display = 'block';
     }
     saveCityToHistory(city);
+    tourIsReady = true;
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) resetBtn.textContent = '↩ Choose a different city';
   }
 
   // ── GENERATE TOUR ────────────────────────────────────────────────
@@ -1121,6 +1132,10 @@
     const btn = document.getElementById('gen-btn');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Building your tour...';
+    tourIsReady = false;
+    // Reset button says "Choose a different tour" during loading
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) resetBtn.textContent = '↩ Choose a different tour';
 
     // Hide all steps, show output
     [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
