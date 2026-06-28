@@ -122,6 +122,24 @@
     .output.visible { display: block; }
     .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 20px; }
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
+    /* Meeting point bar */
+    .meeting-point-bar { background: var(--green-light); border: 0.5px solid var(--green); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .mp-info { display: flex; align-items: flex-start; gap: 10px; flex: 1; min-width: 0; }
+    .mp-icon { font-size: 18px; flex-shrink: 0; }
+    .mp-label { font-size: 10px; font-weight: 700; color: var(--green-dark); text-transform: uppercase; letter-spacing: 0.5px; }
+    .mp-address { font-size: 12px; color: var(--green-dark); line-height: 1.4; }
+    .mp-directions-btn { background: var(--green); color: white; border: none; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; font-family: inherit; flex-shrink: 0; }
+
+    /* Stop checkmark */
+    .stop-check-btn { background: none; border: 1.5px solid var(--border); border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-left: auto; transition: all 0.15s; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+    .stop-check-btn:hover { border-color: var(--green); color: var(--green); }
+    .stop-card.done { opacity: 0.6; border-left-color: var(--text-muted); }
+    .stop-card.done .stop-check-btn { background: var(--text-muted); color: white; border-color: var(--text-muted); }
+
+    /* Offline banner */
+    .offline-banner { background: #FFF3CD; border: 0.5px solid #FFC107; border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: #856404; display: none; align-items: center; gap: 8px; }
+    .offline-banner.visible { display: flex; }
+
     .tour-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .tour-title { font-size: 20px; font-weight: 700; color: var(--text); text-transform: capitalize; }
     .ai-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; background: var(--green-light); color: var(--green-dark); font-weight: 600; }
@@ -408,7 +426,12 @@
 
     <!-- OUTPUT -->
     <div class="output" id="output-section">
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <!-- Offline banner -->
+    <div class="offline-banner" id="offline-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+      You're offline — Maps and Share need a connection. Audio, PDF and saved tours work fine.
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
       <div class="pdf-header" id="pdf-header">
         <div class="pdf-logo">Travel<span>ens</span></div>
         <div class="pdf-tagline">GPS for the wandering soul</div>
@@ -664,7 +687,70 @@
     showStep('3b');
   }
 
-  // ── CITY HISTORY ─────────────────────────────────────────────────
+  // ── MEETING POINT DIRECTIONS ─────────────────────────────────────
+  function getDirectionsToMeetingPoint(meetingPoint) {
+    const encoded = encodeURIComponent(meetingPoint);
+    // Opens Maps with directions from current location to meeting point
+    const url = /iPhone|iPad|Android/i.test(navigator.userAgent)
+      ? `maps://?daddr=${encoded}`
+      : `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+    window.open(url, '_blank');
+  }
+
+  // ── STOP PROGRESS (checkmarks) ───────────────────────────────────
+  const PROGRESS_KEY = 'travelens_stop_progress';
+  let stopProgress = {};
+
+  function loadStopProgress() {
+    try { stopProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); }
+    catch(e) { stopProgress = {}; }
+  }
+
+  function toggleStopDone(city, stopNum, btn) {
+    const key = `${city}:${stopNum}`;
+    stopProgress[key] = !stopProgress[key];
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(stopProgress));
+
+    // Update card appearance
+    const card = btn.closest('.stop-card');
+    const numEl = card.querySelector('.stop-num');
+    const nameEl = card.querySelector('.stop-name');
+
+    if (stopProgress[key]) {
+      card.classList.add('done');
+      numEl.textContent = '✓';
+      numEl.style.background = 'var(--text-muted)';
+      nameEl.style.textDecoration = 'line-through';
+      nameEl.style.opacity = '0.5';
+      btn.textContent = '↩';
+    } else {
+      card.classList.remove('done');
+      numEl.textContent = stopNum;
+      numEl.style.background = '';
+      nameEl.style.textDecoration = '';
+      nameEl.style.opacity = '';
+      btn.textContent = '✓';
+    }
+  }
+
+  // ── OFFLINE DETECTION ─────────────────────────────────────────────
+  function updateOfflineStatus() {
+    const banner = document.getElementById('offline-banner');
+    const mapsBtn = document.getElementById('maps-btn');
+    const shareBtn = document.getElementById('share-btn');
+    const isOffline = !navigator.onLine;
+
+    if (banner) {
+      if (isOffline) banner.classList.add('visible');
+      else banner.classList.remove('visible');
+    }
+    // Dim Maps and Share when offline
+    if (mapsBtn) mapsBtn.style.opacity = isOffline ? '0.4' : '';
+    if (shareBtn) shareBtn.style.opacity = isOffline ? '0.4' : '';
+  }
+
+  window.addEventListener('online', updateOfflineStatus);
+  window.addEventListener('offline', updateOfflineStatus);
   const CITY_HISTORY_KEY = 'travelens_city_history';
 
   function saveCityToHistory(city) {
@@ -927,10 +1013,31 @@
   }
 
   // ── RENDER OUTPUT ────────────────────────────────────────────────
-  function renderOutput(text, city, preservedStops) {
+  function renderOutput(text, city, preservedStops, meetingPoint) {
     rawTourText = text; currentCity = city; stopNames = [];
     const content = document.getElementById('output-content');
     content.innerHTML = '';
+
+    // Meeting point directions banner
+    const mp = meetingPoint || selectedTourContext?.meeting_point;
+    if (mp) {
+      const mpBanner = document.createElement('div');
+      mpBanner.className = 'meeting-point-bar';
+      mpBanner.innerHTML = `
+        <div class="mp-info">
+          <span class="mp-icon">📍</span>
+          <div>
+            <div class="mp-label">Meeting point</div>
+            <div class="mp-address">${mp}</div>
+          </div>
+        </div>
+        <button class="mp-directions-btn" onclick="getDirectionsToMeetingPoint('${mp.replace(/'/g,"\\'")}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          Directions
+        </button>`;
+      content.appendChild(mpBanner);
+    }
+
     const header = document.createElement('div');
     header.className = 'tour-header';
     header.innerHTML = `<div class="tour-title">Your ${city} tour</div><div class="ai-badge">AI guide</div>`;
@@ -951,10 +1058,19 @@
         currentStop.className = 'stop-card';
         const match = l.match(/STOP\s*(\d+)[:\-\s]+(.+?)(?:\s*\|\s*(.+))?$/i);
         if (match) {
-          stopNames.push(match[2].trim());
+          const stopNum = parseInt(match[1]);
+          const stopName = match[2].trim();
+          stopNames.push(stopName);
+          const isDone = stopProgress[`${city}:${stopNum}`];
           const sh = document.createElement('div');
           sh.className = 'stop-header';
-          sh.innerHTML = `<div class="stop-num">${match[1]}</div><div class="stop-name">${match[2].trim()}</div>${match[3] ? `<div class="stop-time">${match[3].trim()}</div>` : ''}`;
+          sh.innerHTML = `
+            <div class="stop-num" style="${isDone ? 'background:var(--text-muted)' : ''}">${isDone ? '✓' : match[1]}</div>
+            <div class="stop-name" style="${isDone ? 'text-decoration:line-through;opacity:0.5' : ''}">${stopName}</div>
+            ${match[3] ? `<div class="stop-time">${match[3].trim()}</div>` : ''}
+            <button class="stop-check-btn" onclick="toggleStopDone('${city}',${stopNum},this)" title="Mark as done">
+              ${isDone ? '↩' : '✓'}
+            </button>`;
           currentStop.appendChild(sh);
         }
         content.appendChild(currentStop);
@@ -1466,6 +1582,8 @@
   window.addEventListener('load', async () => {
     updateToursCount();
     renderCityHistory();
+    loadStopProgress();
+    updateOfflineStatus();
     const handled = await checkSharedTour();
     if (!handled) {
       initGreeting();
