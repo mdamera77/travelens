@@ -138,9 +138,10 @@
     .tidbits-body.collapsed { max-height: 0; }
     .tidbits-body.expanded { max-height: 600px; }
 
-    /* Walking mode — only collapse tidbits, description always shows */
-    .walking-mode .tidbits-body { max-height: 0; overflow: hidden; }
-    .walking-mode .tidbits-toggle-arrow { transform: rotate(0deg); }
+    /* Walking mode — show first sentence only, collapse rest */
+    .walking-mode .stop-desc-full { display: none; }
+    .walking-mode .stop-desc-toggle { display: inline; color: var(--green); font-size: 12px; cursor: pointer; font-weight: 600; }
+    .stop-desc-toggle { display: none; } /* hidden in full guide */
 
     .quick-info-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding: 12px 14px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); }
     .qi-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
@@ -735,6 +736,17 @@
     showStep('3b');
   }
 
+  function toggleDesc(el) {
+    const full = el.previousElementSibling;
+    if (full.style.display === 'none' || full.style.display === '') {
+      full.style.display = 'inline';
+      el.textContent = ' read less ▲';
+    } else {
+      full.style.display = '';
+      el.textContent = ' read more ▼';
+    }
+  }
+
   // ── TOUR MODE TOGGLE ─────────────────────────────────────────────
   function setTourMode(mode, btn) {
     localStorage.setItem('travelens_mode', mode);
@@ -743,16 +755,27 @@
     btn.classList.add('active');
     if (mode === 'walking') {
       content.classList.add('walking-mode');
+      // Collapse tidbits
       document.querySelectorAll('.tidbits-body').forEach(b => {
         b.classList.remove('expanded'); b.classList.add('collapsed');
       });
       document.querySelectorAll('.tidbits-toggle-arrow').forEach(a => a.classList.remove('open'));
+      // Collapse descriptions — hide full part, show read more
+      document.querySelectorAll('.stop-desc-full').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.stop-desc-toggle').forEach(el => {
+        el.style.display = 'inline';
+        el.textContent = ' read more ▼';
+      });
     } else {
       content.classList.remove('walking-mode');
+      // Expand tidbits
       document.querySelectorAll('.tidbits-body').forEach(b => {
         b.classList.remove('collapsed'); b.classList.add('expanded');
       });
       document.querySelectorAll('.tidbits-toggle-arrow').forEach(a => a.classList.add('open'));
+      // Show full descriptions
+      document.querySelectorAll('.stop-desc-full').forEach(el => el.style.display = 'inline');
+      document.querySelectorAll('.stop-desc-toggle').forEach(el => el.style.display = 'none');
     }
   }
 
@@ -1292,7 +1315,26 @@
           currentStop.appendChild(p);
         }
       } else if (l.length > 15) {
-        if (currentStop && !inTidbits) { const existing = currentStop.querySelector('.stop-desc'); if (existing) { existing.textContent += ' ' + l; } else { const p = document.createElement('div'); p.className = 'stop-desc'; p.textContent = l; currentStop.appendChild(p); } }
+        if (currentStop && !inTidbits) {
+          const existing = currentStop.querySelector('.stop-desc-wrap');
+          if (existing) {
+            // Append to full desc
+            const full = existing.querySelector('.stop-desc-full');
+            if (full) full.textContent += ' ' + l;
+          } else {
+            // First description line — split into first sentence + rest
+            const firstDot = l.search(/[.!?]\s/);
+            const firstSentence = firstDot > 0 ? l.substring(0, firstDot + 1) : l;
+            const rest = firstDot > 0 ? l.substring(firstDot + 2) : '';
+            const wrap = document.createElement('div');
+            wrap.className = 'stop-desc-wrap';
+            wrap.style.cssText = 'font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:10px;';
+            wrap.innerHTML = `<span class="stop-desc-first">${firstSentence}</span>` +
+              (rest ? ` <span class="stop-desc-full">${rest}</span>` +
+              `<span class="stop-desc-toggle" onclick="toggleDesc(this)"> read more ▼</span>` : '');
+            currentStop.appendChild(wrap);
+          }
+        }
         else if (inTidbits && currentStop) {
           const td = document.createElement('div');
           td.className = 'tidbit';
