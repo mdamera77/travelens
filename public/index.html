@@ -124,6 +124,25 @@
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
     /* Meeting point bar */
     /* Quick info bar */
+    /* Mode toggle */
+    .mode-toggle { display: flex; gap: 4px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 20px; padding: 3px; margin-bottom: 14px; }
+    .mode-toggle-btn { flex: 1; padding: 7px 12px; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; background: none; color: var(--text-muted); font-family: inherit; transition: all 0.15s; }
+    .mode-toggle-btn.active { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* Collapsible tidbits */
+    .tidbits-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 6px 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+    .tidbits-toggle-label { font-size: 11px; font-weight: 700; color: var(--amber); text-transform: uppercase; letter-spacing: 0.5px; }
+    .tidbits-toggle-arrow { font-size: 10px; color: var(--amber); transition: transform 0.2s; }
+    .tidbits-toggle-arrow.open { transform: rotate(180deg); }
+    .tidbits-body { overflow: hidden; transition: max-height 0.25s ease; }
+    .tidbits-body.collapsed { max-height: 0; }
+    .tidbits-body.expanded { max-height: 600px; }
+
+    /* Walking mode — collapse descriptions */
+    .walking-mode .stop-desc { display: none; }
+    .walking-mode .stop-desc:first-of-type { display: block; }
+    .walking-mode .tidbit { font-size: 12px; padding: 5px 8px; }
+
     .quick-info-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; padding: 12px 14px; background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); }
     .qi-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
     .qi-item strong { color: var(--text); font-weight: 600; }
@@ -717,6 +736,39 @@
     showStep('3b');
   }
 
+  // ── TOUR MODE TOGGLE ─────────────────────────────────────────────
+  function setTourMode(mode, btn) {
+    localStorage.setItem('travelens_mode', mode);
+    const content = document.getElementById('output-content');
+    document.querySelectorAll('.mode-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (mode === 'walking') {
+      content.classList.add('walking-mode');
+      document.querySelectorAll('.tidbits-body').forEach(b => {
+        b.classList.remove('expanded'); b.classList.add('collapsed');
+      });
+      document.querySelectorAll('.tidbits-toggle-arrow').forEach(a => a.classList.remove('open'));
+    } else {
+      content.classList.remove('walking-mode');
+      document.querySelectorAll('.tidbits-body').forEach(b => {
+        b.classList.remove('collapsed'); b.classList.add('expanded');
+      });
+      document.querySelectorAll('.tidbits-toggle-arrow').forEach(a => a.classList.add('open'));
+    }
+  }
+
+  function toggleTidbits(toggleEl) {
+    const body = toggleEl.nextElementSibling;
+    const arrow = toggleEl.querySelector('.tidbits-toggle-arrow');
+    if (body.classList.contains('collapsed')) {
+      body.classList.remove('collapsed'); body.classList.add('expanded');
+      arrow.classList.add('open');
+    } else {
+      body.classList.remove('expanded'); body.classList.add('collapsed');
+      arrow.classList.remove('open');
+    }
+  }
+
   // ── RESET BUTTON — context aware ─────────────────────────────────
   let tourIsReady = false;
   function handleResetBtn() {
@@ -1160,6 +1212,16 @@
     // Quick info bar
     const qiBar = buildQuickInfoBar(city, selectedTourContext);
     if (qiBar) content.appendChild(qiBar);
+
+    // Mode toggle
+    const isWalking = localStorage.getItem('travelens_mode') === 'walking';
+    const toggle = document.createElement('div');
+    toggle.className = 'mode-toggle';
+    toggle.innerHTML = `
+      <button class="mode-toggle-btn ${!isWalking ? 'active' : ''}" onclick="setTourMode('full', this)">📖 Full guide</button>
+      <button class="mode-toggle-btn ${isWalking ? 'active' : ''}" onclick="setTourMode('walking', this)">🚶 Walking mode</button>`;
+    content.appendChild(toggle);
+    if (isWalking) content.classList.add('walking-mode');
     const lines = text.split('\n').filter(l => l.trim());
     let currentStop = null, inTidbits = false;
     lines.forEach(line => {
@@ -1194,7 +1256,21 @@
         content.appendChild(currentStop);
       } else if (/^TIDBIT/i.test(l)) {
         inTidbits = true;
-        if (currentStop) { const tl = document.createElement('div'); tl.className = 'tidbits-label'; tl.textContent = '✦ Tour guide tidbits'; currentStop.appendChild(tl); }
+        if (currentStop) {
+          // Create collapsible tidbits section
+          const isWalkingMode = localStorage.getItem('travelens_mode') === 'walking';
+          const tidbitSection = document.createElement('div');
+          tidbitSection.className = 'tidbits-section';
+          tidbitSection.innerHTML = `
+            <div class="tidbits-toggle" onclick="toggleTidbits(this)">
+              <span class="tidbits-toggle-label">✦ Tour guide tidbits</span>
+              <span class="tidbits-toggle-arrow ${isWalkingMode ? '' : 'open'}">▼</span>
+            </div>
+            <div class="tidbits-body ${isWalkingMode ? 'collapsed' : 'expanded'}"></div>`;
+          currentStop.appendChild(tidbitSection);
+          // Set currentTidbitsBody for subsequent tidbit lines
+          currentStop._tidbitsBody = tidbitSection.querySelector('.tidbits-body');
+        }
       } else if (/^WALK:/i.test(l)) {
         inTidbits = false;
         const w = document.createElement('div');
@@ -1203,11 +1279,28 @@
         if (currentStop) currentStop.appendChild(w);
       } else if (/^[-*•]\s/.test(l)) {
         const txt = l.replace(/^[-*•]\s*/, '');
-        if (inTidbits && currentStop) { const td = document.createElement('div'); td.className = 'tidbit'; td.textContent = txt; currentStop.appendChild(td); }
-        else if (currentStop) { const p = document.createElement('div'); p.className = 'stop-desc'; p.textContent = txt; currentStop.appendChild(p); }
+        if (inTidbits && currentStop) {
+          const td = document.createElement('div');
+          td.className = 'tidbit';
+          td.textContent = txt;
+          // Add to tidbits body if it exists, else directly to stop
+          const body = currentStop._tidbitsBody || currentStop;
+          body.appendChild(td);
+        } else if (currentStop) {
+          const p = document.createElement('div');
+          p.className = 'stop-desc';
+          p.textContent = txt;
+          currentStop.appendChild(p);
+        }
       } else if (l.length > 15) {
         if (currentStop && !inTidbits) { const existing = currentStop.querySelector('.stop-desc'); if (existing) { existing.textContent += ' ' + l; } else { const p = document.createElement('div'); p.className = 'stop-desc'; p.textContent = l; currentStop.appendChild(p); } }
-        else if (inTidbits && currentStop) { const td = document.createElement('div'); td.className = 'tidbit'; td.textContent = l; currentStop.appendChild(td); }
+        else if (inTidbits && currentStop) {
+          const td = document.createElement('div');
+          td.className = 'tidbit';
+          td.textContent = l;
+          const body = currentStop._tidbitsBody || currentStop;
+          body.appendChild(td);
+        }
       }
     });
     document.getElementById('download-bar').style.display = 'flex';
