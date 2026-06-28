@@ -505,11 +505,16 @@
       <!-- Real guide prompt — shown after tour renders for DB tours -->
       <div class="personal-prompt" id="personal-prompt" style="display:none;">
         <div class="personal-prompt-inner">
-          <div class="personal-prompt-title">Want a real local guide?</div>
-          <div class="personal-prompt-text">This tour is available with a qualified local guide — free to join, tip-based. Book your spot directly on the tour site.</div>
-          <button class="personal-prompt-btn" id="personal-prompt-btn" onclick="bookWithRealGuide()">
-            🗺️ Book with a real guide →
-          </button>
+          <div class="personal-prompt-title">While you wait — you have options</div>
+          <div class="personal-prompt-text">Join this tour with a real local guide, or build a personalised version around your own interests and pace.</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="personal-prompt-btn" id="personal-prompt-btn" onclick="bookWithRealGuide()">
+              🗺️ Book with a real guide →
+            </button>
+            <button class="personal-prompt-btn" onclick="personaliseThisTour()" style="background:var(--green);">
+              ✨ Build my own personalised tour
+            </button>
+          </div>
         </div>
       </div>
 
@@ -721,17 +726,37 @@
       tryAnotherTour(); // Still loading — go back to tour list
     }
   }
+  function personaliseThisTour() {
+    // Hide output and go to AI builder with city pre-filled
+    window.speechSynthesis.cancel();
+    audioPlaying = false; audioSegments = [];
+    document.getElementById('audio-bar').classList.remove('visible');
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('output-content').innerHTML = '';
+    document.getElementById('download-bar').style.display = 'none';
+    document.getElementById('progress-fill').style.width = '0%';
+    document.getElementById('float-btns').style.display = 'none';
+    document.getElementById('try-again-btn').style.display = 'none';
+    document.getElementById('personal-prompt').style.display = 'none';
+    rawTourText = ''; stopNames = []; selectedTourContext = null;
+    tourIsReady = false;
+    goToStep3b(); // Go straight to AI tour builder, city already set
+  }
+
   function bookWithRealGuide() {
     if (!selectedTourContext) return;
-    // Use stored URL if available, otherwise link to source search for city
-    const url = selectedTourContext.url ||
-      (selectedTourContext.source === 'GuruWalk'
-        ? `https://www.guruwalk.com/walks?q=${encodeURIComponent(currentCity.split(',')[0])}`
-        : selectedTourContext.source === 'FreeTour'
-        ? `https://www.freetour.com/search?q=${encodeURIComponent(currentCity.split(',')[0])}`
-        : selectedTourContext.source === 'GetYourGuide'
-        ? `https://www.getyourguide.com/s/?q=${encodeURIComponent(currentCity.split(',')[0] + ' walking tour')}`
-        : `https://www.freetoursbyfoot.com/?s=${encodeURIComponent(currentCity.split(',')[0])}`);
+    const city = currentCity.split(',')[0];
+    const source = selectedTourContext.source || 'GuruWalk';
+
+    // Always use city search pages — never fake specific tour URLs
+    const urls = {
+      'GuruWalk': `https://www.guruwalk.com/walks?q=${encodeURIComponent(city)}`,
+      'FreeTour': `https://www.freetour.com/search?q=${encodeURIComponent(city)}`,
+      'GetYourGuide': `https://www.getyourguide.com/s/?q=${encodeURIComponent(city + ' walking tour')}`,
+      'FreeToursByFoot': `https://www.freetoursbyfoot.com/?s=${encodeURIComponent(city)}`
+    };
+
+    const url = urls[source] || urls['GuruWalk'];
     window.open(url, '_blank');
   }
   function buildQuickInfoBar(city, tourContext) {
@@ -1204,15 +1229,15 @@
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.textContent = '↩ Choose a different city';
 
-    // Show real guide prompt only for DB/real tours
-    const prompt = document.getElementById('personal-prompt');
-    const promptBtn = document.getElementById('personal-prompt-btn');
+    // Update personal prompt copy now tour is ready
     if (prompt && selectedTourContext?.source && selectedTourContext.source !== 'AI Tour') {
       const source = selectedTourContext.source;
       const color = selectedTourContext.sourceColor || '#FF6B35';
+      const titleEl = prompt.querySelector('.personal-prompt-title');
+      if (titleEl) titleEl.textContent = 'Like this tour?';
       if (promptBtn) {
         promptBtn.style.background = color;
-        promptBtn.textContent = `Book with a real guide on ${source} →`;
+        promptBtn.textContent = `🗺️ Book with a real guide on ${source} →`;
       }
       prompt.style.display = 'block';
     } else if (prompt) {
@@ -1233,6 +1258,20 @@
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Building your tour...';
     tourIsReady = false;
+    // Show personal prompt during loading for real tours
+    const ppEl = document.getElementById('personal-prompt');
+    const ppBtn = document.getElementById('personal-prompt-btn');
+    if (ppEl && selectedTourContext?.source && selectedTourContext.source !== 'AI Tour') {
+      const color = selectedTourContext.sourceColor || '#FF6B35';
+      if (ppBtn) {
+        ppBtn.style.background = color;
+        ppBtn.textContent = `🗺️ Book with a real guide on ${selectedTourContext.source} →`;
+      }
+      ppEl.querySelector('.personal-prompt-title').textContent = 'While you wait — you have options';
+      ppEl.style.display = 'block';
+    } else if (ppEl) {
+      ppEl.style.display = 'none';
+    }
     // Reset button says "Choose a different tour" during loading
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.textContent = '↩ Choose a different tour';
