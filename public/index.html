@@ -160,6 +160,14 @@
     .tip-box { background: var(--green-light); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; font-size: 13px; color: var(--green-dark); line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
     .reset-btn { width: 100%; padding: 13px; background: var(--bg); color: var(--text-muted); border: 0.5px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 6px; font-family: inherit; }
     .try-again-btn { width: 100%; padding: 13px; background: var(--green-light); color: var(--green-dark); border: 0.5px solid var(--green); border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 6px; font-family: inherit; }
+
+    /* Personal touch prompt */
+    .personal-prompt { margin-top: 24px; margin-bottom: 6px; }
+    .personal-prompt-inner { border-top: 0.5px solid var(--border); padding-top: 20px; text-align: center; }
+    .personal-prompt-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .personal-prompt-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; max-width: 300px; margin-left: auto; margin-right: auto; }
+    .personal-prompt-btn { background: var(--amber); color: white; border: none; border-radius: 12px; padding: 13px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; width: 100%; transition: opacity 0.15s; }
+    .personal-prompt-btn:hover { opacity: 0.9; }
     .city-history { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
     .city-chip { padding: 5px 12px; background: var(--card); border: 0.5px solid var(--border); border-radius: 20px; font-size: 12px; color: var(--text-muted); cursor: pointer; transition: all 0.15s; }
     .city-chip:hover { border-color: var(--green); color: var(--green-dark); background: var(--green-light); }
@@ -493,6 +501,16 @@
         </div>
       </div>
       <div id="output-content"></div>
+
+      <!-- Personal touch prompt — shown after tour renders for DB tours -->
+      <div class="personal-prompt" id="personal-prompt" style="display:none;">
+        <div class="personal-prompt-inner">
+          <div class="personal-prompt-title">Want something more personal?</div>
+          <div class="personal-prompt-text">This tour follows a fixed route with a group. Build one around your interests, pace and starting point instead.</div>
+          <button class="personal-prompt-btn" onclick="personaliseThisTour()">✨ Personalise this tour for me</button>
+        </div>
+      </div>
+
       <button class="reset-btn" id="reset-btn" onclick="handleResetBtn()">↩ Choose a different tour</button>
     </div>
 
@@ -701,7 +719,27 @@
       tryAnotherTour(); // Still loading — go back to tour list
     }
   }
-  // ── QUICK INFO BAR ────────────────────────────────────────────────
+  function personaliseThisTour() {
+    // Pre-fill city and go to Step 3B (AI tour builder)
+    // City is already set from current tour
+    // Hide output
+    window.speechSynthesis.cancel();
+    audioPlaying = false; audioSegments = [];
+    document.getElementById('audio-bar').classList.remove('visible');
+    document.getElementById('output-section').classList.remove('visible');
+    document.getElementById('output-content').innerHTML = '';
+    document.getElementById('download-bar').style.display = 'none';
+    document.getElementById('progress-fill').style.width = '0%';
+    document.getElementById('float-btns').style.display = 'none';
+    document.getElementById('try-again-btn').style.display = 'none';
+    document.getElementById('personal-prompt').style.display = 'none';
+    rawTourText = ''; stopNames = [];
+    // Keep selectedTourContext for reference but clear it so AI builds fresh
+    selectedTourContext = null;
+    tourIsReady = false;
+    // Go straight to AI tour builder with city pre-filled
+    goToStep3b();
+  }
   function buildQuickInfoBar(city, tourContext) {
     const items = [];
 
@@ -1018,6 +1056,8 @@
     document.getElementById('download-bar').style.display = 'none';
     document.getElementById('progress-fill').style.width = '0%';
     rawTourText = ''; stopNames = []; selectedTourContext = null;
+    const pp = document.getElementById('personal-prompt');
+    if (pp) pp.style.display = 'none';
     // Restore original greeting
     const name = localStorage.getItem('travelens_name');
     if (name) {
@@ -1169,6 +1209,13 @@
     tourIsReady = true;
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) resetBtn.textContent = '↩ Choose a different city';
+
+    // Show personal prompt only for DB/real tours (not AI-generated ones)
+    const prompt = document.getElementById('personal-prompt');
+    if (prompt) {
+      prompt.style.display = selectedTourContext?.source && selectedTourContext.source !== 'AI Tour'
+        ? 'block' : 'none';
+    }
   }
 
   // ── GENERATE TOUR ────────────────────────────────────────────────
