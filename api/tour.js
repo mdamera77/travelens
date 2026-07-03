@@ -46,13 +46,22 @@ export default async function handler(req, res) {
   }
 
   // ── GENERATE WITH AI ─────────────────────────────────────────────
-  const stopInstruction = tourContext?.highlights?.length
+  // Custom attractions mode — user selected specific places
+  const customAttractions = tourContext?.customAttractions;
+
+  const stopInstruction = customAttractions?.length
+    ? `The traveler has hand-picked EXACTLY these attractions. Visit them in the most logical walking order. Include transport suggestions (tram/bus/rideshare) if walking between any two is over 1.5km:
+${customAttractions.map((a, i) => `STOP ${i + 1}: ${a.name} (${a.duration_mins} min · ${a.entry_fee})`).join('\n')}
+Total: ${customAttractions.length} stops. Cover every single one. Do NOT add or remove any.`
+    : tourContext?.highlights?.length
     ? `CRITICAL — Follow EXACTLY these stops in EXACTLY this order. Do NOT add, remove, rename, or reorder:
 ${tourContext.highlights.map((s, i) => `STOP ${i + 1}: ${s}`).join('\n')}
 Total: ${tourContext.highlights.length} stops. Cover every single one.`
     : `Build 6-8 interesting stops for ${city} starting near ${hotel || 'city centre'}.`;
 
-  const tourInfo = tourContext
+  const tourInfo = customAttractions?.length
+    ? `Custom "Plan My Own Adventure" tour — traveler-selected attractions in ${city}`
+    : tourContext
     ? `Real tour: "${tourContext.title}" from ${tourContext.source || 'tour site'}`
     : `AI-generated tour for ${city}`;
 
