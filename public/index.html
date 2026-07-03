@@ -962,8 +962,16 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ city, duration: getSelectedDuration(), stamina: getAdventureStamina() })
       });
+
+      // Check if response is ok before parsing
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Server error ${res.status}: ${errText.substring(0, 100)}`);
+      }
+
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      if (!data.attractions?.categories?.length) throw new Error('No attractions returned');
 
       allAttractions = data.attractions;
       adventureDurationMins = getSelectedDuration();
@@ -972,7 +980,16 @@
       document.getElementById('time-total').textContent = adventureDurationMins >= 600 ? 'flexible' : adventureDurationMins + ' min';
 
     } catch(e) {
+      console.error('Attractions error:', e);
       showToast('Could not load attractions — ' + e.message);
+      // Show error inline too
+      document.getElementById('attractions-browser').style.display = 'block';
+      document.getElementById('attractions-list').innerHTML = `
+        <div class="error-box">
+          <strong>Could not load attractions</strong><br>
+          ${e.message}<br><br>
+          <small>Check that api/attractions.js is committed to the dev branch in GitHub.</small>
+        </div>`;
     } finally {
       btn.disabled = false;
       btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Show me everything in ${city.split(',')[0]}`;
