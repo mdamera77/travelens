@@ -28,9 +28,9 @@ export default async function handler(req, res) {
   }
 
   // ── GENERATE WITH AI ─────────────────────────────────────────────
-  const prompt = `You are a travel expert. For "${city}", list all major attractions worth visiting.
+  const prompt = `You are a travel expert. For "${city}", list major attractions worth visiting.
 
-Return ONLY valid JSON, no markdown:
+Return ONLY valid JSON, no markdown, no trailing commas:
 {
   "city": "${city}",
   "categories": [
@@ -40,42 +40,34 @@ Return ONLY valid JSON, no markdown:
       "emoji": "🏛️",
       "attractions": [
         {
-          "id": "prague-castle",
-          "name": "Prague Castle",
-          "description": "One sentence — what makes it special and unmissable",
-          "duration_mins": 90,
-          "entry_fee": "Free (grounds) / €14 (full circuit)",
-          "hours": "6am–10pm daily",
+          "id": "unique-slug",
+          "name": "Attraction Name",
+          "description": "One short sentence — what makes it special",
+          "duration_mins": 60,
+          "entry_fee": "Free or €12",
+          "hours": "9am–6pm",
           "free": false,
           "must_see": true,
-          "lat": 50.0909,
-          "lng": 14.4005,
-          "tip": "One insider tip — best time, secret entrance, what to look for"
+          "tip": "One short insider tip"
         }
       ]
     }
   ]
 }
 
-Categories to include (only if city has relevant attractions):
-- historical (castles, monuments, historic sites)
-- art_museums (galleries, art museums)
-- culture (theatres, opera, cultural centres)  
-- culinary (markets, food halls, famous restaurants, street food)
-- nature (parks, gardens, viewpoints, rivers)
-- religious (churches, cathedrals, synagogues, mosques)
-- quirky (unusual, hidden gems, only-in-this-city experiences)
-- shopping (markets, shopping districts — NOT malls)
+Include these categories (only if relevant for ${city}):
+- historical · art_museums · culinary · nature · religious · quirky
 
 Rules:
-- 5-12 attractions per category, only ones genuinely worth visiting
-- duration_mins: realistic time including queues
-- entry_fee: specific real prices or "Free"
-- free: true only if completely free
-- must_see: true for top 5-8 attractions in the entire city
-- lat/lng: accurate coordinates
-- tip: genuinely useful insider knowledge
-- Total attractions: 30-60 depending on city size`;
+- MAX 6 attractions per category
+- MAX 5 categories
+- description: ONE sentence only, under 15 words
+- tip: ONE sentence only, under 15 words  
+- hours: short format only e.g. "9am–6pm daily"
+- entry_fee: price only e.g. "Free" or "€12" or "€8–18"
+- must_see: true for top 6 attractions total across all categories
+- Total attractions: 20-30 maximum
+- Keep ALL strings SHORT to avoid response truncation`;
 
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -87,7 +79,7 @@ Rules:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4000,
+        max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }]
       })
     });
@@ -96,7 +88,26 @@ Rules:
     if (data.error) throw new Error(data.error.message);
 
     let text = data.content[0].text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const attractions = JSON.parse(text);
+
+    // Safety net — if JSON is truncated, try to recover by closing it
+    let attractions;
+    try {
+      attractions = JSON.parse(text);
+    } catch(parseErr) {
+      // Try to salvage truncated JSON by finding last complete attraction
+      const lastComplete = text.lastIndexOf('},');
+      if (lastComplete > 0) {
+        const truncated = text.substring(0, lastComplete + 1) + ']}]}';
+        try {
+          attractions = JSON.parse(truncated);
+          console.log('Recovered truncated JSON');
+        } catch(e2) {
+          throw new Error('JSON truncated and unrecoverable — try again');
+        }
+      } else {
+        throw parseErr;
+      }
+    }
 
     // Cache for 90 days — attraction data is stable
     if (redisUrl && redisToken) {
