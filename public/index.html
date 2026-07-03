@@ -124,7 +124,37 @@
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
     /* Meeting point bar */
     /* Quick info bar */
-    /* Mode toggle */
+    /* Step 3C — Plan My Own Adventure */
+    .time-budget-bar { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+    .time-budget-info { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 8px; }
+    .time-budget-info span { color: var(--text); }
+    #selected-count { font-weight: 700; color: var(--green); }
+    .time-budget-sep { color: var(--text-muted); }
+    .time-budget-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .time-budget-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s, background 0.3s; }
+    .time-budget-fill.over { background: #E53E3E; }
+    .time-budget-warning { font-size: 12px; color: #C53030; margin-top: 8px; }
+
+    .attraction-category { margin-bottom: 20px; }
+    .attraction-category-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 14px; font-weight: 700; color: var(--text); }
+    .attraction-category-count { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+    .attraction-card { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; background: var(--card); border: 0.5px solid var(--border); border-radius: 12px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
+    .attraction-card:hover { border-color: var(--green); }
+    .attraction-card.selected { border-color: var(--green); background: var(--green-light); }
+    .attraction-card.must-see { border-left: 3px solid var(--amber); }
+    .attraction-checkbox { width: 22px; height: 22px; border: 1.5px solid var(--border); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; margin-top: 2px; }
+    .attraction-card.selected .attraction-checkbox { background: var(--green); border-color: var(--green); }
+    .attraction-checkbox-tick { color: white; font-size: 12px; display: none; }
+    .attraction-card.selected .attraction-checkbox-tick { display: block; }
+    .attraction-info { flex: 1; min-width: 0; }
+    .attraction-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+    .attraction-must-badge { font-size: 9px; background: var(--amber); color: white; padding: 1px 6px; border-radius: 10px; font-weight: 700; text-transform: uppercase; }
+    .attraction-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 5px; }
+    .attraction-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .attraction-meta span { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 3px; }
+    .attraction-tip { font-size: 11px; color: var(--green-dark); background: var(--green-light); border-radius: 6px; padding: 5px 8px; margin-top: 6px; display: none; }
+    .attraction-card.selected .attraction-tip { display: block; }
     .mode-toggle { display: flex; gap: 4px; background: var(--bg); border: 0.5px solid var(--border); border-radius: 20px; padding: 3px; margin-bottom: 14px; }
     .mode-toggle-btn { flex: 1; padding: 7px 12px; border: none; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer; background: none; color: var(--text-muted); font-family: inherit; transition: all 0.15s; }
     .mode-toggle-btn.active { background: var(--card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
@@ -230,7 +260,7 @@
     @media print {
       body { background: white; color: #1a1a1a; }
       .app { max-width: 100%; padding: 0; }
-      #greeting-screen, #step1, #step2, #step3a, #step3b, .reset-btn, .download-bar, .progress-bar, .audio-bar, #my-tours-screen, .my-tours-trigger { display: none !important; }
+      #greeting-screen, #step1, #step2, #step3a, #step3b, #step3c, .reset-btn, .download-bar, .progress-bar, .audio-bar, #my-tours-screen, .my-tours-trigger { display: none !important; }
       .output { display: block !important; }
       .stop-card { break-inside: avoid; border: 1px solid #ddd; border-left: 3px solid #1D9E75; }
       .tidbit { background: #FAEEDA; border-left: 2px solid #EF9F27; }
@@ -339,6 +369,14 @@
           <div class="mode-card-text">
             <div class="mode-card-title">Build my own AI tour</div>
             <div class="mode-card-desc">Tell us your vibe and we'll craft a personalised tour just for you</div>
+          </div>
+          <svg class="mode-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="mode-card" onclick="goToStep3c()">
+          <div class="mode-icon" style="background:#EDE9FE;">🎯</div>
+          <div class="mode-card-text">
+            <div class="mode-card-title">Plan my own adventure</div>
+            <div class="mode-card-desc">Browse all attractions, pick what you want — we map the perfect route</div>
           </div>
           <svg class="mode-card-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </div>
@@ -470,7 +508,73 @@
       </button>
     </div>
 
-    <!-- OUTPUT -->
+    <!-- STEP 3C: Plan My Own Adventure -->
+    <div id="step3c" style="display:none;">
+      <button class="back-btn" onclick="goBack(2)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back
+      </button>
+      <div class="mode-title">Plan my own adventure</div>
+      <div class="mode-subtitle" id="step3c-subtitle">Choose what you want to see in Prague</div>
+
+      <!-- Time & Stamina -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:10px;">How much time do you have?</div>
+        <div class="pill-group" id="duration-pills">
+          <div class="pill" data-val="60" data-label="1 hour">1 hour</div>
+          <div class="pill" data-val="120" data-label="2 hours">2 hours</div>
+          <div class="pill active" data-val="180" data-label="Half day">Half day</div>
+          <div class="pill" data-val="360" data-label="Full day">Full day</div>
+          <div class="pill" data-val="600" data-label="I'm flexible">I'm flexible</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-label" style="margin-bottom:10px;">Your walking level?</div>
+        <div class="pill-group" id="adventure-stamina-pills">
+          <div class="pill" data-val="easy" data-label="Easy stroll">🚶 Easy — short distances</div>
+          <div class="pill active" data-val="moderate" data-label="Moderate">🚶‍♂️ Moderate — up to 3km</div>
+          <div class="pill" data-val="explorer" data-label="Explorer">🏃 Explorer — no limits</div>
+        </div>
+      </div>
+
+      <!-- Load attractions button -->
+      <button class="btn" id="load-attractions-btn" onclick="loadAttractions()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Show me everything in <span id="load-attractions-city">this city</span>
+      </button>
+
+      <!-- Attractions browser -->
+      <div id="attractions-browser" style="display:none;margin-top:16px;">
+
+        <!-- Time budget bar -->
+        <div class="time-budget-bar" id="time-budget-bar">
+          <div class="time-budget-info">
+            <span id="selected-count">0 selected</span>
+            <span class="time-budget-sep">·</span>
+            <span id="time-used">0 min</span>
+            <span class="time-budget-sep">of</span>
+            <span id="time-total">180 min</span>
+          </div>
+          <div class="time-budget-track">
+            <div class="time-budget-fill" id="time-budget-fill"></div>
+          </div>
+          <div id="time-budget-warning" class="time-budget-warning" style="display:none;">
+            ⚠️ Over your time budget — uncheck something or choose a longer duration
+          </div>
+        </div>
+
+        <!-- Category sections injected here -->
+        <div id="attractions-list"></div>
+
+        <!-- Generate button -->
+        <button class="btn" id="build-adventure-btn" onclick="buildAdventureTour()" style="display:none;margin-top:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Build my tour from <span id="build-count">0</span> selections
+        </button>
+
+      </div>
+    </div>
     <div class="output" id="output-section">
       <!-- Offline banner -->
     <div class="offline-banner" id="offline-banner">
@@ -816,6 +920,135 @@
       body.classList.remove('expanded'); body.classList.add('collapsed');
       arrow.classList.remove('open');
     }
+  }
+
+  // ── STEP 3C — PLAN MY OWN ADVENTURE ─────────────────────────────
+  let selectedAttractions = [];
+  let allAttractions = null;
+  let adventureDurationMins = 180;
+
+  function goToStep3c() {
+    const cityName = document.getElementById('city').value.split(',')[0].trim();
+    document.getElementById('step3c-subtitle').textContent = `Choose what you want to see in ${cityName}`;
+    document.getElementById('load-attractions-city').textContent = cityName;
+    const rg = document.getElementById('return-greeting');
+    if (rg) rg.textContent = `Everything ${cityName} has to offer — you choose`;
+    selectedAttractions = [];
+    allAttractions = null;
+    document.getElementById('attractions-browser').style.display = 'none';
+    document.getElementById('build-adventure-btn').style.display = 'none';
+    showStep('3c');
+  }
+
+  function getSelectedDuration() {
+    const active = document.querySelector('#duration-pills .pill.active');
+    return active ? parseInt(active.dataset.val) : 180;
+  }
+
+  function getAdventureStamina() {
+    const active = document.querySelector('#adventure-stamina-pills .pill.active');
+    return active ? active.dataset.val : 'moderate';
+  }
+
+  async function loadAttractions() {
+    const city = document.getElementById('city').value.trim();
+    const btn = document.getElementById('load-attractions-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Loading attractions...';
+
+    try {
+      const res = await fetch('/api/attractions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city, duration: getSelectedDuration(), stamina: getAdventureStamina() })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      allAttractions = data.attractions;
+      adventureDurationMins = getSelectedDuration();
+      renderAttractionsBrowser(data.attractions);
+      document.getElementById('attractions-browser').style.display = 'block';
+      document.getElementById('time-total').textContent = adventureDurationMins >= 600 ? 'flexible' : adventureDurationMins + ' min';
+
+    } catch(e) {
+      showToast('Could not load attractions — ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Show me everything in ${city.split(',')[0]}`;
+    }
+  }
+
+  function renderAttractionsBrowser(data) {
+    const list = document.getElementById('attractions-list');
+    list.innerHTML = '';
+    data.categories.forEach(cat => {
+      const section = document.createElement('div');
+      section.className = 'attraction-category';
+      section.innerHTML = `<div class="attraction-category-header">
+        <span>${cat.emoji}</span><span>${cat.label}</span>
+        <span class="attraction-category-count">${cat.attractions.length} places</span>
+      </div>`;
+      cat.attractions.forEach(attr => {
+        const card = document.createElement('div');
+        card.className = `attraction-card${attr.must_see ? ' must-see' : ''}`;
+        card.id = `attr-${attr.id}`;
+        card.innerHTML = `
+          <div class="attraction-checkbox"><span class="attraction-checkbox-tick">✓</span></div>
+          <div class="attraction-info">
+            <div class="attraction-name">${attr.name}${attr.must_see ? ' <span class="attraction-must-badge">⭐ Must see</span>' : ''}</div>
+            <div class="attraction-desc">${attr.description}</div>
+            <div class="attraction-meta">
+              <span>⏱ ${attr.duration_mins} min</span>
+              <span>${attr.free ? '🆓 Free' : '💰 ' + attr.entry_fee}</span>
+              <span>🕐 ${attr.hours}</span>
+            </div>
+            ${attr.tip ? `<div class="attraction-tip">💡 ${attr.tip}</div>` : ''}
+          </div>`;
+        card.addEventListener('click', () => toggleAttraction(attr, card));
+        section.appendChild(card);
+      });
+      list.appendChild(section);
+    });
+  }
+
+  function toggleAttraction(attr, card) {
+    const idx = selectedAttractions.findIndex(a => a.id === attr.id);
+    if (idx > -1) { selectedAttractions.splice(idx, 1); card.classList.remove('selected'); }
+    else { selectedAttractions.push(attr); card.classList.add('selected'); }
+    updateTimeBudget();
+  }
+
+  function updateTimeBudget() {
+    const totalMins = selectedAttractions.reduce((sum, a) => sum + (a.duration_mins || 30), 0);
+    const isOver = adventureDurationMins < 600 && totalMins > adventureDurationMins;
+    const pct = adventureDurationMins >= 600 ? Math.min((totalMins / 480) * 100, 100) : Math.min((totalMins / adventureDurationMins) * 100, 100);
+    document.getElementById('selected-count').textContent = `${selectedAttractions.length} selected`;
+    document.getElementById('time-used').textContent = totalMins + ' min';
+    const fill = document.getElementById('time-budget-fill');
+    fill.style.width = pct + '%';
+    fill.className = 'time-budget-fill' + (isOver ? ' over' : '');
+    document.getElementById('time-budget-warning').style.display = isOver ? 'block' : 'none';
+    const buildBtn = document.getElementById('build-adventure-btn');
+    if (selectedAttractions.length > 0) {
+      buildBtn.style.display = 'flex';
+      document.getElementById('build-count').textContent = selectedAttractions.length;
+    } else {
+      buildBtn.style.display = 'none';
+    }
+  }
+
+  function buildAdventureTour() {
+    if (!selectedAttractions.length) return;
+    const city = document.getElementById('city').value.trim();
+    const tourContext = {
+      title: `My ${city.split(',')[0]} Adventure`,
+      source: 'AI Tour',
+      customAttractions: selectedAttractions,
+      highlights: selectedAttractions.map(a => a.name)
+    };
+    selectedTourContext = tourContext;
+    generateTour(tourContext);
   }
 
   // ── RESET BUTTON — context aware ─────────────────────────────────
@@ -1482,7 +1715,7 @@
     if (resetBtn) resetBtn.textContent = '↩ Choose a different tour';
 
     // Hide all steps, show output
-    [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+    [1,2,'3a','3b','3c'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
     document.getElementById('output-section').classList.add('visible');
     document.getElementById('float-btns').style.display = 'flex';
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1666,7 +1899,7 @@
 
   function showMyTours() {
     // Hide all steps and output
-    ['step1','step2','step3a','step3b','output-section'].forEach(id => {
+    ['step1','step2','step3a','step3b','step3c','output-section'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
@@ -1745,7 +1978,7 @@
     // Hide everything else
     document.getElementById('my-tours-screen').style.display = 'none';
     document.getElementById('hero') && (document.getElementById('hero').style.display = 'none');
-    [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+    [1,2,'3a','3b','3c'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
 
     // Show output
     const outputSection = document.getElementById('output-section');
@@ -1893,7 +2126,7 @@
     // Show loading state immediately
     document.getElementById('greeting-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
-    [1,2,'3a','3b'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
+    [1,2,'3a','3b','3c'].forEach(s => { const el = document.getElementById('step' + s); if (el) el.style.display = 'none'; });
     const outputSection = document.getElementById('output-section');
     outputSection.classList.add('visible');
     document.getElementById('output-content').innerHTML = `
