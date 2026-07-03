@@ -124,6 +124,18 @@
     .progress-fill { height: 100%; background: var(--green); width: 0%; transition: width 0.5s ease; border-radius: 2px; }
     /* Meeting point bar */
     /* Quick info bar */
+    /* Filter bar */
+    .filter-btn { padding: 6px 12px; border: 0.5px solid var(--border); border-radius: 20px; background: var(--bg); color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+    .filter-btn.active { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+    .select-must-btn { padding: 6px 12px; border: 0.5px solid var(--amber); border-radius: 20px; background: var(--amber-light); color: #8B5E00; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .attraction-card.filtered-out { display: none; }
+
+    /* Mini map placeholder */
+    .mini-route-map { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; display: none; }
+    .mini-route-map.visible { display: block; }
+    .mini-route-summary { font-size: 13px; color: var(--green-dark); font-weight: 600; margin-bottom: 6px; }
+    .mini-route-stops { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+
     /* Step 3C — Plan My Own Adventure */
     .time-budget-bar { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
     .time-budget-info { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 8px; }
@@ -547,12 +559,33 @@
       <!-- Attractions browser -->
       <div id="attractions-browser" style="display:none;margin-top:16px;">
 
+        <!-- Filter bar + Select Must-Sees -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+          <div style="display:flex;gap:6px;flex:1;flex-wrap:wrap;">
+            <button class="filter-btn active" data-filter="all" onclick="filterAttractions('all',this)">All</button>
+            <button class="filter-btn" data-filter="free" onclick="filterAttractions('free',this)">🆓 Free</button>
+            <button class="filter-btn" data-filter="must" onclick="filterAttractions('must',this)">⭐ Must see</button>
+            <button class="filter-btn" data-filter="quick" onclick="filterAttractions('quick',this)">⚡ Under 30 min</button>
+          </div>
+          <button class="select-must-btn" onclick="selectAllMustSees()">⭐ Select all must-sees</button>
+        </div>
+
+        <!-- Mini route summary -->
+        <div class="mini-route-map" id="mini-route-map">
+          <div class="mini-route-summary" id="mini-route-summary"></div>
+          <div class="mini-route-stops" id="mini-route-stops"></div>
+        </div>
+
         <!-- Time budget bar -->
         <div class="time-budget-bar" id="time-budget-bar">
           <div class="time-budget-info">
             <span id="selected-count">0 selected</span>
             <span class="time-budget-sep">·</span>
             <span id="time-used">0 min</span>
+            <span class="time-budget-sep">+</span>
+            <span id="walk-time">~0 min walking</span>
+            <span class="time-budget-sep">=</span>
+            <span id="total-time-label" style="font-weight:700;">0 min total</span>
             <span class="time-budget-sep">of</span>
             <span id="time-total">180 min</span>
           </div>
@@ -1034,18 +1067,28 @@
     if (idx > -1) { selectedAttractions.splice(idx, 1); card.classList.remove('selected'); }
     else { selectedAttractions.push(attr); card.classList.add('selected'); }
     updateTimeBudget();
+    updateRouteMap();
   }
 
   function updateTimeBudget() {
-    const totalMins = selectedAttractions.reduce((sum, a) => sum + (a.duration_mins || 30), 0);
+    const attrMins = selectedAttractions.reduce((sum, a) => sum + (a.duration_mins || 30), 0);
+    // Add ~15 min walking buffer per stop (except first)
+    const walkMins = selectedAttractions.length > 1 ? (selectedAttractions.length - 1) * 15 : 0;
+    const totalMins = attrMins + walkMins;
     const isOver = adventureDurationMins < 600 && totalMins > adventureDurationMins;
-    const pct = adventureDurationMins >= 600 ? Math.min((totalMins / 480) * 100, 100) : Math.min((totalMins / adventureDurationMins) * 100, 100);
+    const pct = adventureDurationMins >= 600
+      ? Math.min((totalMins / 480) * 100, 100)
+      : Math.min((totalMins / adventureDurationMins) * 100, 100);
+
     document.getElementById('selected-count').textContent = `${selectedAttractions.length} selected`;
-    document.getElementById('time-used').textContent = totalMins + ' min';
+    document.getElementById('time-used').textContent = attrMins + ' min';
+    document.getElementById('walk-time').textContent = `~${walkMins} min walking`;
+    document.getElementById('total-time-label').textContent = totalMins + ' min total';
     const fill = document.getElementById('time-budget-fill');
     fill.style.width = pct + '%';
     fill.className = 'time-budget-fill' + (isOver ? ' over' : '');
     document.getElementById('time-budget-warning').style.display = isOver ? 'block' : 'none';
+
     const buildBtn = document.getElementById('build-adventure-btn');
     if (selectedAttractions.length > 0) {
       buildBtn.style.display = 'flex';
@@ -1055,11 +1098,79 @@
     }
   }
 
+  function updateRouteMap() {
+    const map = document.getElementById('mini-route-map');
+    if (selectedAttractions.length === 0) {
+      map.classList.remove('visible');
+      return;
+    }
+    map.classList.add('visible');
+    const attrMins = selectedAttractions.reduce((sum, a) => sum + (a.duration_mins || 30), 0);
+    const walkMins = selectedAttractions.length > 1 ? (selectedAttractions.length - 1) * 15 : 0;
+    document.getElementById('mini-route-summary').textContent =
+      `🗺️ Your route: ${selectedAttractions.length} stop${selectedAttractions.length > 1 ? 's' : ''} · ~${attrMins + walkMins} min total (${attrMins} min visits + ${walkMins} min walking)`;
+    document.getElementById('mini-route-stops').innerHTML =
+      selectedAttractions.map((a, i) =>
+        `${i > 0 ? '<span style="color:var(--text-muted)">🚶 ~15 min →</span> ' : ''}${a.name}`
+      ).join(' ');
+  }
+
+  function filterAttractions(type, btn) {
+    // Update active filter button
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    // Show/hide attraction cards
+    document.querySelectorAll('.attraction-card').forEach(card => {
+      const isFree = card.querySelector('.attraction-meta span:nth-child(2)')?.textContent.includes('🆓');
+      const isMust = card.classList.contains('must-see');
+      const durationText = card.querySelector('.attraction-meta span')?.textContent || '';
+      const mins = parseInt(durationText) || 60;
+      let show = true;
+      if (type === 'free') show = isFree;
+      else if (type === 'must') show = isMust;
+      else if (type === 'quick') show = mins <= 30;
+      card.classList.toggle('filtered-out', !show);
+    });
+  }
+
+  function selectAllMustSees() {
+    if (!allAttractions) return;
+    allAttractions.categories.forEach(cat => {
+      cat.attractions.forEach(attr => {
+        if (attr.must_see) {
+          const card = document.getElementById(`attr-${attr.id}`);
+          if (card && !card.classList.contains('selected')) {
+            selectedAttractions.push(attr);
+            card.classList.add('selected');
+          }
+        }
+      });
+    });
+    updateTimeBudget();
+    updateRouteMap();
+    showToast(`⭐ ${selectedAttractions.length} must-see spots selected!`);
+  }
+
   function buildAdventureTour() {
     if (!selectedAttractions.length) return;
     const city = document.getElementById('city').value.trim();
+    const cityName = city.split(',')[0];
+
+    // Generate a smart title based on what was selected
+    const categories = [...new Set(selectedAttractions.map(a => {
+      if (a.must_see) return 'Highlights';
+      return null;
+    }).filter(Boolean))];
+
+    const attrMins = selectedAttractions.reduce((sum, a) => sum + (a.duration_mins || 30), 0);
+    const walkMins = (selectedAttractions.length - 1) * 15;
+    const totalHours = Math.round((attrMins + walkMins) / 30) / 2;
+    const timeLabel = totalHours <= 1 ? '1 hour' : totalHours <= 2 ? `${totalHours} hours` : totalHours <= 4 ? 'half day' : 'full day';
+
+    const title = `My ${cityName} Adventure: ${selectedAttractions.length} stops, ${timeLabel}`;
+
     const tourContext = {
-      title: `My ${city.split(',')[0]} Adventure`,
+      title,
       source: 'AI Tour',
       customAttractions: selectedAttractions,
       highlights: selectedAttractions.map(a => a.name)
@@ -1558,6 +1669,28 @@
         tip.className = 'tip-box';
         tip.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span>${l.replace('TIP:', '').trim()}</span>`;
         content.appendChild(tip);
+      } else if (l === 'SHOPPING') {
+        inTidbits = false;
+        // Start shopping section
+        const shopSection = document.createElement('div');
+        shopSection.id = 'shopping-section';
+        shopSection.style.cssText = 'background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;';
+        shopSection.innerHTML = `<div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px;">🛍️ Where to shop after your tour</div><div id="shopping-items"></div>`;
+        content.appendChild(shopSection);
+        currentStop = null;
+      } else if (/^(LOCAL|BUDGET|MIDRANGE|DESIGNER|AVOID):/.test(l)) {
+        inTidbits = false;
+        const shopItems = document.getElementById('shopping-items');
+        if (shopItems) {
+          const type = l.split(':')[0];
+          const val = l.replace(/^[A-Z]+:\s*/, '').trim();
+          const icons = { LOCAL: '🏘️', BUDGET: '💰', MIDRANGE: '🛒', DESIGNER: '✨', AVOID: '⚠️' };
+          const labels = { LOCAL: 'Local & markets', BUDGET: 'Budget & quirky', MIDRANGE: 'Mid-range', DESIGNER: 'Designer', AVOID: 'Avoid' };
+          const item = document.createElement('div');
+          item.style.cssText = `display:flex;gap:10px;margin-bottom:8px;font-size:13px;${type === 'AVOID' ? 'color:#C53030;' : 'color:var(--text);'}`;
+          item.innerHTML = `<span style="flex-shrink:0;width:20px">${icons[type]}</span><div><strong>${labels[type]}:</strong> ${val}</div>`;
+          shopItems.appendChild(item);
+        }
       } else if (/^STOP\s*\d+/i.test(l)) {
         inTidbits = false;
         currentStop = document.createElement('div');
