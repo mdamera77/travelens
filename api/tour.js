@@ -91,6 +91,13 @@ WALK: [Specific street directions and minutes to next stop]
 TIP: [Practical tip — opening times, cash, what to bring]
 TIP: [One local secret that transforms the experience]
 
+SHOPPING
+LOCAL: [Best local market or neighbourhood for authentic finds — name and why]
+BUDGET: [Best area for affordable or quirky shopping]
+MIDRANGE: [Main shopping street or district]
+DESIGNER: [Luxury area if relevant, otherwise skip this line]
+AVOID: [One honest tourist-trap shopping warning]
+
 Make tidbits genuinely surprising. Specific, human, unexpected.`;
 
   try {
