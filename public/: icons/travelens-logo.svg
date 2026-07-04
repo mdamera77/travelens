@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 460" width="400" height="460">
+
+  <!-- Background -->
+  <rect width="400" height="460" rx="24" fill="#0a2a1f"/>
+
+  <!-- Pin shadow -->
+  <ellipse cx="200" cy="308" rx="28" ry="7" fill="#000000" opacity="0.25"/>
+
+  <!-- Pin body -->
+  <path d="M200 80 C163 80 132 111 132 148 C132 195 200 278 200 278 C200 278 268 195 268 148 C268 111 237 80 200 80Z" fill="#1D9E75"/>
+
+  <!-- Pin left highlight -->
+  <path d="M200 80 C163 80 132 111 132 148 C132 172 145 198 162 220 C140 192 134 168 134 148 C134 113 164 82 200 82Z" fill="#5DCEA0" opacity="0.2"/>
+
+  <!-- Lens circle dark -->
+  <circle cx="200" cy="145" r="32" fill="#0a2a1f"/>
+
+  <!-- Lens ring -->
+  <circle cx="200" cy="145" r="32" fill="none" stroke="#5DCEA0" stroke-width="1.5" opacity="0.35"/>
+
+  <!-- Lens glint large -->
+  <circle cx="188" cy="133" r="9" fill="#5DCEA0" opacity="0.45"/>
+
+  <!-- Lens glint small -->
+  <circle cx="185" cy="130" r="4" fill="white" opacity="0.35"/>
+
+  <!-- Wordmark -->
+  <text
+    x="200"
+    y="340"
+    text-anchor="middle"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="42"
+    font-weight="800"
+    letter-spacing="-1"
+    fill="white">Travel<tspan fill="#5DCEA0">ens</tspan></text>
+
+  <!-- Tagline -->
+  <text
+    x="200"
+    y="372"
+    text-anchor="middle"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="11"
+    font-weight="400"
+    letter-spacing="3"
+    fill="rgba(255,255,255,0.38)">GPS FOR THE WANDERING SOUL</text>
+
+  <!-- Subtle bottom line -->
+  <line x1="140" y1="395" x2="260" y2="395" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>
+
+  <!-- gotravelens.com -->
+  <text
+    x="200"
+    y="418"
+    text-anchor="middle"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="10"
+    fill="rgba(255,255,255,0.22)"
+    letter-spacing="0.5">gotravelens.com</text>
+
+</svg>
