@@ -306,7 +306,70 @@
     .save-toast.show { opacity: 1; }
 
     /* Greeting */
-    #greeting-screen { display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 100dvh; padding: 40px 20px; }
+    #greeting-screen { display: none; flex-direction: column; align-items: stretch; min-height: 100dvh; padding: 0; background: var(--bg); overflow-x: hidden; }
+    /* Marketing page sections */
+    .lp-section { padding: 60px 24px; max-width: 480px; margin: 0 auto; width: 100%; }
+    .lp-hero { background: linear-gradient(160deg, #0a2a1f 0%, #0d3d2a 60%, #1D9E75 100%); color: white; padding: 70px 28px 60px; text-align: center; position: relative; overflow: hidden; }
+    .lp-hero::before { content: ''; position: absolute; top: -40%; left: -20%; width: 140%; height: 140%; background: radial-gradient(ellipse at 60% 40%, rgba(29,158,117,0.25) 0%, transparent 60%); pointer-events: none; }
+    .lp-logo { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+    .lp-logo span { color: #5DCEA0; }
+    .lp-tagline { font-size: 13px; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 36px; }
+    .lp-headline { font-size: clamp(28px, 8vw, 38px); font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 14px; }
+    .lp-headline em { color: #5DCEA0; font-style: normal; }
+    .lp-sub { font-size: 16px; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 36px; max-width: 340px; margin-left: auto; margin-right: auto; }
+    .lp-cta-primary { display: block; width: 100%; max-width: 340px; margin: 0 auto 12px; padding: 17px; background: #1D9E75; color: white; border: none; border-radius: 14px; font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit; letter-spacing: -0.3px; transition: transform 0.15s; }
+    .lp-cta-primary:active { transform: scale(0.98); }
+    .lp-cta-note { font-size: 12px; color: rgba(255,255,255,0.4); }
+    .lp-cities-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 28px 24px 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .lp-cities-scroll::-webkit-scrollbar { display: none; }
+    .lp-city-pill { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; border: 0.5px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); font-size: 12px; white-space: nowrap; }
+
+    /* Problem section */
+    .lp-problem { background: var(--bg); }
+    .lp-section-label { font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+    .lp-section-title { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 24px; }
+    .lp-compare { display: flex; flex-direction: column; gap: 10px; }
+    .lp-compare-row { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border-radius: 12px; }
+    .lp-compare-row.before { background: #FFF5F5; border: 0.5px solid #FED7D7; }
+    .lp-compare-row.after { background: var(--green-light); border: 0.5px solid rgba(29,158,117,0.2); }
+    .lp-compare-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .lp-compare-text { font-size: 13px; line-height: 1.5; }
+    .lp-compare-row.before .lp-compare-text { color: #C53030; }
+    .lp-compare-row.after .lp-compare-text { color: var(--green-dark); }
+
+    /* How it works */
+    .lp-steps { display: flex; flex-direction: column; gap: 20px; }
+    .lp-step { display: flex; gap: 16px; align-items: flex-start; }
+    .lp-step-num { width: 36px; height: 36px; border-radius: 50%; background: var(--green); color: white; font-size: 15px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lp-step-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+    .lp-step-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* City showcases */
+    .lp-showcase { background: var(--card); border: 0.5px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 12px; }
+    .lp-showcase-city { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+    .lp-showcase-tidbit { font-size: 15px; color: var(--text); line-height: 1.5; font-style: italic; }
+    .lp-showcase-source { font-size: 11px; color: var(--green); margin-top: 8px; font-weight: 600; }
+
+    /* Features */
+    .lp-features { display: flex; flex-direction: column; gap: 14px; }
+    .lp-feature { display: flex; gap: 14px; align-items: flex-start; }
+    .lp-feature-icon { width: 40px; height: 40px; border-radius: 12px; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .lp-feature-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .lp-feature-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Traveler types */
+    .lp-types { display: flex; flex-direction: column; gap: 10px; }
+    .lp-type { background: var(--card); border: 0.5px solid var(--border); border-radius: 14px; padding: 16px; }
+    .lp-type-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .lp-type-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+
+    /* Final CTA */
+    .lp-final { background: linear-gradient(160deg, #0a2a1f 0%, #0d3d2a 100%); color: white; text-align: center; padding: 60px 28px 80px; }
+    .lp-final-title { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 10px; }
+    .lp-final-sub { font-size: 15px; color: rgba(255,255,255,0.6); margin-bottom: 32px; line-height: 1.5; }
+    .lp-city-btns { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto 20px; }
+    .lp-city-btn { padding: 14px; background: rgba(255,255,255,0.08); color: white; border: 0.5px solid rgba(255,255,255,0.15); border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .lp-city-btn:hover { background: rgba(29,158,117,0.3); border-color: var(--green); }
   </style>
 </head>
 <body>
@@ -314,15 +377,216 @@
 
   <!-- GREETING SCREEN -->
   <div id="greeting-screen">
-    <div class="hero-icon" style="margin:0 auto 14px;">
-      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+
+    <!-- HERO -->
+    <div class="lp-hero">
+      <div style="position:relative;z-index:1;">
+        <div class="lp-logo">Travel<span>ens</span></div>
+        <div class="lp-tagline">GPS for the wandering soul</div>
+        <div class="lp-headline">Every city has secrets.<br><em>We'll help you find them.</em></div>
+        <div class="lp-sub">Your city. Your pace. Your tour — built in seconds. Free, instant, no signup needed.</div>
+        <button class="lp-cta-primary" onclick="showNameEntry()">Start planning my tour →</button>
+        <div class="lp-cta-note">Works on any phone · No app download · Always free</div>
+      </div>
+      <!-- Scrolling city pills -->
+      <div class="lp-cities-scroll">
+        <div class="lp-city-pill">🏰 Prague</div>
+        <div class="lp-city-pill">🗼 Tokyo</div>
+        <div class="lp-city-pill">🏛️ Rome</div>
+        <div class="lp-city-pill">🌊 Dubrovnik</div>
+        <div class="lp-city-pill">🎨 Barcelona</div>
+        <div class="lp-city-pill">🌸 Kyoto</div>
+        <div class="lp-city-pill">🏙️ New York</div>
+        <div class="lp-city-pill">🕌 Istanbul</div>
+        <div class="lp-city-pill">🎭 Vienna</div>
+        <div class="lp-city-pill">🌴 Bali</div>
+        <div class="lp-city-pill">🦁 Cape Town</div>
+        <div class="lp-city-pill">🥐 Paris</div>
+      </div>
     </div>
-    <div class="logo">Travel<span>ens</span></div>
-    <div style="font-size:15px;font-weight:600;color:var(--text);margin-top:6px;letter-spacing:-0.3px;">Your city. Your pace. Your tour — built in seconds.</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-top:4px;font-style:italic;">Every city has secrets. We'll help you find them.</div>
-    <div id="greeting-message" style="font-size:18px;color:var(--text);margin:32px 0 24px;line-height:1.6;max-width:300px;"></div>
-    <input type="text" id="name-input" placeholder="Your name..." style="width:100%;max-width:300px;padding:13px 16px;font-size:16px;border:0.5px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;text-align:center;margin-bottom:12px;font-family:inherit;" />
-    <button onclick="saveName()" style="width:100%;max-width:300px;padding:13px;background:var(--green);color:white;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;">Let's wander →</button>
+
+    <!-- PROBLEM → SOLUTION -->
+    <div class="lp-section lp-problem">
+      <div class="lp-section-label">Sound familiar?</div>
+      <div class="lp-section-title">You're not a tourist.<br>Stop touring like one.</div>
+      <div class="lp-compare">
+        <div class="lp-compare-row before">
+          <span class="lp-compare-icon">😩</span>
+          <span class="lp-compare-text">Generic routes that hit the same 10 sights as everyone else</span>
+        </div>
+        <div class="lp-compare-row after">
+          <span class="lp-compare-icon">✓</span>
+          <span class="lp-compare-text">Hidden gems, local secrets and stories most visitors never hear</span>
+        </div>
+        <div class="lp-compare-row before">
+          <span class="lp-compare-icon">😩</span>
+          <span class="lp-compare-text">Group tours at fixed times, fixed pace, fixed stops</span>
+        </div>
+        <div class="lp-compare-row after">
+          <span class="lp-compare-icon">✓</span>
+          <span class="lp-compare-text">Your pace, your interests, your starting point — always</span>
+        </div>
+        <div class="lp-compare-row before">
+          <span class="lp-compare-icon">😩</span>
+          <span class="lp-compare-text">Hours googling "things to do" with no clear plan</span>
+        </div>
+        <div class="lp-compare-row after">
+          <span class="lp-compare-icon">✓</span>
+          <span class="lp-compare-text">A full guide with stops, stories, directions and audio in 20 seconds</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CITY SHOWCASE — the wow tidbits -->
+    <div class="lp-section" style="padding-top:0;">
+      <div class="lp-section-label">What you'll discover</div>
+      <div class="lp-section-title">The stories no guidebook tells you.</div>
+      <div class="lp-showcase">
+        <div class="lp-showcase-city">🏰 Prague</div>
+        <div class="lp-showcase-tidbit">"The Astronomical Clock hasn't shown the correct time since 1865 — and city authorities have deliberately kept it that way."</div>
+        <div class="lp-showcase-source">From the Travelens Prague Classic Highlights tour</div>
+      </div>
+      <div class="lp-showcase">
+        <div class="lp-showcase-city">🏛️ Rome</div>
+        <div class="lp-showcase-tidbit">"The Trevi Fountain collects over €1 million in coins per year — every euro goes directly to a food bank feeding Rome's poorest residents."</div>
+        <div class="lp-showcase-source">From the Travelens Rome Hidden Gems tour</div>
+      </div>
+      <div class="lp-showcase">
+        <div class="lp-showcase-city">🌊 Dubrovnik</div>
+        <div class="lp-showcase-tidbit">"George Bernard Shaw called Dubrovnik the pearl of the Adriatic — locals say he arrived on a Tuesday and left on a Wednesday, having seen nothing."</div>
+        <div class="lp-showcase-source">From the Travelens Dubrovnik History & Culture tour</div>
+      </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="lp-section" style="background:var(--card);border-radius:0;padding-top:50px;padding-bottom:50px;">
+      <div class="lp-section-label">How it works</div>
+      <div class="lp-section-title">A great tour in three steps.</div>
+      <div class="lp-steps">
+        <div class="lp-step">
+          <div class="lp-step-num">1</div>
+          <div>
+            <div class="lp-step-title">Choose your city</div>
+            <div class="lp-step-desc">Any city in the world. Type it, tap it, we know it.</div>
+          </div>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num">2</div>
+          <div>
+            <div class="lp-step-title">Tell us how you wander</div>
+            <div class="lp-step-desc">History buff or foodie? Hidden gems or must-sees? Easy stroll or all-day explorer? Or pick exactly what you want to see from a full list of attractions.</div>
+          </div>
+        </div>
+        <div class="lp-step">
+          <div class="lp-step-num">3</div>
+          <div>
+            <div class="lp-step-title">Walk in with your guide</div>
+            <div class="lp-step-desc">Full tour with stops, stories, tidbits, walking directions and audio narration. Built in 20 seconds. Yours to keep, share and listen to offline.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="lp-section">
+      <div class="lp-section-label">What's included</div>
+      <div class="lp-section-title">Everything you need.<br>Nothing you don't.</div>
+      <div class="lp-features">
+        <div class="lp-feature">
+          <div class="lp-feature-icon">🔊</div>
+          <div>
+            <div class="lp-feature-title">Audio guide — hands free</div>
+            <div class="lp-feature-desc">Listen to your tour as you walk. Stop-by-stop narration, play and pause anytime.</div>
+          </div>
+        </div>
+        <div class="lp-feature">
+          <div class="lp-feature-icon">📍</div>
+          <div>
+            <div class="lp-feature-title">Maps & directions</div>
+            <div class="lp-feature-desc">Route opens in Google Maps. Directions to the meeting point from wherever you are.</div>
+          </div>
+        </div>
+        <div class="lp-feature">
+          <div class="lp-feature-icon">🎯</div>
+          <div>
+            <div class="lp-feature-title">Plan your own adventure</div>
+            <div class="lp-feature-desc">Browse every attraction in a city — entry fees, hours, insider tips. Pick what you want. We build the optimal route.</div>
+          </div>
+        </div>
+        <div class="lp-feature">
+          <div class="lp-feature-icon">📱</div>
+          <div>
+            <div class="lp-feature-title">Works offline</div>
+            <div class="lp-feature-desc">Save your tour before you fly. Read, listen and navigate without data.</div>
+          </div>
+        </div>
+        <div class="lp-feature">
+          <div class="lp-feature-icon">🔗</div>
+          <div>
+            <div class="lp-feature-title">Share with anyone</div>
+            <div class="lp-feature-desc">Send your tour as a short link. Friends open it instantly — no account, no download.</div>
+          </div>
+        </div>
+        <div class="lp-feature">
+          <div class="lp-feature-icon">🛍️</div>
+          <div>
+            <div class="lp-feature-title">Shopping guide included</div>
+            <div class="lp-feature-desc">Local markets, budget finds, mid-range and designer — plus honest advice on what to avoid.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAVELER TYPES -->
+    <div class="lp-section" style="padding-top:0;">
+      <div class="lp-section-label">Built for real travelers</div>
+      <div class="lp-section-title">Whoever you are<br>when you travel.</div>
+      <div class="lp-types">
+        <div class="lp-type">
+          <div class="lp-type-title">🎒 The solo explorer</div>
+          <div class="lp-type-desc">Hidden gems, local haunts, off the tourist trail. Walking mode for quick glances on the move.</div>
+        </div>
+        <div class="lp-type">
+          <div class="lp-type-title">📋 The planner</div>
+          <div class="lp-type-desc">Browse every attraction with entry fees and hours. Build the perfect itinerary before you land.</div>
+        </div>
+        <div class="lp-type">
+          <div class="lp-type-title">👨‍👩‍👧 The family organiser</div>
+          <div class="lp-type-desc">Must-see sights, accessible routes, what's free and what's not. No surprises on the day.</div>
+        </div>
+        <div class="lp-type">
+          <div class="lp-type-title">👥 The group with different tastes</div>
+          <div class="lp-type-desc">Split up, do your own tours, reunite at a meeting point. Everyone happy.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FINAL CTA -->
+    <div class="lp-final">
+      <div class="lp-final-title">Ready to wander smarter?</div>
+      <div class="lp-final-sub">Pick a city and your tour is ready in 20 seconds.<br>Free. No signup. No download.</div>
+      <div class="lp-city-btns">
+        <button class="lp-city-btn" onclick="startWithCity('Prague')">🏰 Plan my Prague tour</button>
+        <button class="lp-city-btn" onclick="startWithCity('Tokyo')">🗼 Plan my Tokyo tour</button>
+        <button class="lp-city-btn" onclick="startWithCity('Rome')">🏛️ Plan my Rome tour</button>
+        <button class="lp-city-btn" onclick="startWithCity('Barcelona')">🎨 Plan my Barcelona tour</button>
+      </div>
+      <button class="lp-cta-primary" onclick="showNameEntry()" style="margin:0 auto;">Choose my own city →</button>
+      <div class="lp-cta-note" style="margin-top:12px;">Travelens · travelens-ten.vercel.app · Built by MaNiDi LLC</div>
+    </div>
+
+    <!-- Name entry (hidden initially, shown when CTA tapped) -->
+    <div id="name-entry-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:999;align-items:flex-end;justify-content:center;">
+      <div style="background:var(--card);border-radius:20px 20px 0 0;padding:28px 24px 40px;width:100%;max-width:480px;">
+        <div style="font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;">Before we start —</div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">What shall I call you, wandering soul?</div>
+        <input type="text" id="name-input" placeholder="Your name..." autocomplete="given-name"
+          style="width:100%;padding:14px 16px;font-size:16px;border:0.5px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);outline:none;text-align:center;margin-bottom:12px;font-family:inherit;" />
+        <button onclick="saveName()" style="width:100%;padding:15px;background:var(--green);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;">Let's wander →</button>
+        <button onclick="document.getElementById('name-entry-overlay').style.display='none'" style="width:100%;padding:12px;background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;margin-top:6px;font-family:inherit;">Skip — explore as guest</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- MAIN APP -->
@@ -744,25 +1008,63 @@
     n => `Good to see you again, ${n}. What city is calling you?`,
     n => `${n}! Your next story starts here. Where are we going?`
   ];
+  function showNameEntry() {
+    const overlay = document.getElementById('name-entry-overlay');
+    overlay.style.display = 'flex';
+    setTimeout(() => document.getElementById('name-input').focus(), 100);
+  }
+
+  function startWithCity(city) {
+    // Skip name entry — go straight to app with city pre-filled
+    const name = localStorage.getItem('travelens_name') || '';
+    document.getElementById('greeting-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('city').value = city;
+    if (name) {
+      const g = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
+      document.getElementById('return-greeting').textContent = g(name);
+    }
+    updateToursCount();
+    renderCityHistory();
+    goToStep2();
+  }
+
   function showMainApp(name) {
     document.getElementById('greeting-screen').style.display = 'none';
+    document.getElementById('name-entry-overlay').style.display = 'none';
     document.getElementById('main-app').style.display = 'block';
     const g = returnGreetings[Math.floor(Math.random() * returnGreetings.length)];
     document.getElementById('return-greeting').textContent = g(name);
   }
+
   function saveName() {
     const name = document.getElementById('name-input').value.trim();
-    if (!name) return;
+    if (!name) {
+      // Allow skip — just go to app as guest
+      document.getElementById('greeting-screen').style.display = 'none';
+      document.getElementById('name-entry-overlay').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      updateToursCount();
+      renderCityHistory();
+      return;
+    }
     localStorage.setItem('travelens_name', name);
     showMainApp(name);
+    updateToursCount();
+    renderCityHistory();
   }
+
   document.getElementById('name-input').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+
   function initGreeting() {
     const name = localStorage.getItem('travelens_name');
     if (!name) {
+      // First time — show marketing landing page
       document.getElementById('greeting-screen').style.display = 'flex';
-      document.getElementById('greeting-message').textContent = firstGreetings[Math.floor(Math.random() * firstGreetings.length)];
-    } else { showMainApp(name); }
+    } else {
+      // Returning user — go straight to app
+      showMainApp(name);
+    }
   }
 
   // ── NAVIGATION ───────────────────────────────────────────────────
