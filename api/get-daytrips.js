@@ -1,26 +1,41 @@
-// GET /api/get-daytrips?city=Prague
-// Returns the curated day-trip list for a base city, or an empty array
-// if none are seeded yet (wizard should show "not available yet" gracefully).
-
-import { Redis } from "@upstash/redis";
-
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL,
-  token: process.env.KV_REST_API_TOKEN
-});
-
 export default async function handler(req, res) {
-  const { city } = req.query;
-
-  if (!city) {
-    return res.status(400).json({ error: "city query param required" });
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
   }
 
-  const cityKey = city.toLowerCase();
+  const { city } = req.query;
+  if (!city) return res.status(400).json({ error: 'city query param required' });
+
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+
+  const cityKey = city.toLowerCase().replace(/[^a-z0-9]/g, '-');
   const key = `daytrips-db:${cityKey}`;
-  const data = await redis.get(key);
 
-  const trips = data ? (typeof data === "string" ? JSON.parse(data) : data) : [];
+  res.setHeader('Access-Control-Allow-Origin', '*');
 
-  return res.status(200).json({ city: cityKey, trips });
+  if (!redisUrl || !redisToken) {
+    return res.status(500).json({ error: 'Redis not configured' });
+  }
+
+  try {
+    const cacheRes = await fetch(`${redisUrl}/get/${key}`, {
+      headers: { Authorization: `Bearer ${redisToken}` }
+    });
+    const data = await cacheRes.json();
+
+    if (!data.result) {
+      return res.status(200).json({ city: cityKey, trips: [] });
+    }
+
+    const trips = JSON.parse(data.result);
+    return res.status(200).json({ city: cityKey, trips });
+
+  } catch (err) {
+    console.log('get-daytrips failed:', err.message);
+    return res.status(500).json({ error: err.message || 'Failed to load day trips' });
+  }
 }
