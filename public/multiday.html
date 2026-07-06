@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travelens — Multi-Day Trip Planner</title>
+<style>
+  :root {
+    --teal: #0d9488;
+    --teal-light: #ccfbf1;
+    --coral: #e07856;
+    --coral-light: #fde8e0;
+    --purple: #7c5cbf;
+    --purple-light: #ede7f9;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --bg: #fafafa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px 16px 80px;
+  }
+  .wizard {
+    max-width: 480px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 28px 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .step-count { font-size: 12px; color: var(--text-muted); margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 0 0 18px; }
+  label { font-size: 13px; color: var(--text-muted); display: block; margin: 14px 0 4px; }
+  input, select {
+    width: 100%; padding: 10px 12px; font-size: 15px;
+    border: 1px solid var(--border); border-radius: 10px;
+  }
+  .opt-btn {
+    width: 100%; text-align: left; padding: 14px 16px; margin-bottom: 10px;
+    border: 1px solid var(--border); border-radius: 12px; background: white;
+    cursor: pointer; font-size: 15px; font-family: inherit;
+  }
+  .opt-btn .sub { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; font-weight: normal; }
+  .opt-btn.active { border: 2px solid var(--teal); background: var(--teal-light); }
+  .trip-card {
+    padding: 12px 16px; margin: 10px 0; border-radius: 12px; font-size: 14px;
+  }
+  .trip-card .label { font-weight: 600; display: block; }
+  .trip-card .detail { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
+  .badge {
+    font-size: 10px; padding: 2px 8px; border-radius: 8px; margin-left: 6px; font-weight: 600;
+  }
+  .badge.half { background: var(--teal-light); color: var(--teal); }
+  .badge.full { background: var(--purple-light); color: var(--purple); }
+  .mode-row { display: flex; gap: 8px; margin-top: 10px; }
+  .mode-row button {
+    flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border);
+    background: white; font-family: inherit; cursor: pointer;
+  }
+  .mode-row button.active { border: 2px solid var(--teal); background: var(--teal-light); }
+  .nav-row { display: flex; justify-content: space-between; margin-top: 24px; gap: 10px; }
+  button.primary {
+    background: var(--teal); color: white; border: none; padding: 12px 20px;
+    border-radius: 10px; font-size: 15px; cursor: pointer; font-family: inherit;
+  }
+  button.secondary {
+    background: none; border: 1px solid var(--border); padding: 12px 20px;
+    border-radius: 10px; font-size: 15px; cursor: pointer; font-family: inherit; color: var(--text-muted);
+  }
+  .loading { color: var(--text-muted); font-size: 14px; padding: 12px 0; }
+  .share-box {
+    background: var(--teal-light); border-radius: 12px; padding: 16px; margin-top: 16px;
+    word-break: break-all; font-size: 13px;
+  }
+  .error { color: var(--coral); font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div class="wizard" id="wizard"></div>
+
+<script>
+const BASE_URL = ""; // same-origin, relative paths
+
+const state = {
+  step: 0,
+  baseCity: "Prague",
+  arrivalDate: "",
+  arrivalTime: "14:30",
+  departureDate: "",
+  departureTime: "14:00",
+  dayChoices: {},   // { "2026-09-11": { mode: 0|1|2, tripId, mode2, note, start, end } }
+  daytripsCache: {}, // { prague: [...] }
+  computedDays: [],
+  savedTripId: null,
+  savedTripKey: null
+};
+
+function el(html) {
+  const d = document.createElement("div");
+  d.innerHTML = html;
+  return d.firstElementChild;
+}
+
+// ---- date helpers ----
+function dateRange(startDate, endDate) {
+  const dates = [];
+  let d = new Date(startDate + "T00:00:00");
+  const end = new Date(endDate + "T00:00:00");
+  while (d <= end) {
+    dates.push(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() + 1);
+  }
+  return dates;
+}
+
+function addHours(time, h) {
+  const [hh, mm] = time.split(":").map(Number);
+  const total = hh * 60 + mm + h * 60;
+  const clamped = Math.max(0, Math.min(23 * 60 + 59, total));
+  const nh = Math.floor(clamped / 60), nm = clamped % 60;
+  return String(nh).padStart(2, "0") + ":" + String(nm).padStart(2, "0");
+}
+
+function computeDays() {
+  const dates = dateRange(state.arrivalDate, state.departureDate);
+  return dates.map((date, i) => {
+    const isFirst = i === 0;
+    const isLast = i === dates.length - 1;
+    if (isFirst) {
+      return {
+        date, dayType: "arrival",
+        segments: [{ type: "open-city", start: addHours(state.arrivalTime, 1), end: "21:00" }]
+      };
+    }
+    if (isLast) {
+      return {
+        date, dayType: "departure",
+        segments: [{ type: "open-city", start: "09:00", end: addHours(state.departureTime, -2) }]
+      };
+    }
+    return { date, dayType: "full", segments: null }; // filled in later from dayChoices
+  });
+}
+
+// ---- day trips fetch ----
+async function fetchDaytrips(city) {
+  const key = city.toLowerCase();
+  if (state.daytripsCache[key]) return state.daytripsCache[key];
+  const res = await fetch(`${BASE_URL}/api/daytrips?city=${encodeURIComponent(city)}`);
+  const data = await res.json();
+  state.daytripsCache[key] = data.trips || [];
+  return state.daytripsCache[key];
+}
+
+// ---- screens ----
+function renderTripDatesScreen() {
+  return `
+    <p class="step-count">Step 1</p>
+    <h2>Your trip</h2>
+    <label>Base city</label>
+    <input id="baseCity" value="${state.baseCity}">
+    <label>Arrival date</label>
+    <input id="arrivalDate" type="date" value="${state.arrivalDate}">
+    <label>Arrival time</label>
+    <input id="arrivalTime" type="time" value="${state.arrivalTime}">
+    <label>Departure date</label>
+    <input id="departureDate" type="date" value="${state.departureDate}">
+    <label>Departure time</label>
+    <input id="departureTime" type="time" value="${state.departureTime}">
+    <div id="dateError" class="error"></div>
+  `;
+}
+
+function fullDayDates() {
+  return state.computedDays.filter(d => d.dayType === "full").map(d => d.date);
+}
+
+function renderDayScreen(date) {
+  const choice = state.dayChoices[date] || {};
+  const dayLabel = new Date(date + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+
+  let html = `
+    <p class="step-count">Full day</p>
+    <h2>${dayLabel}</h2>
+    <p style="font-size:14px;color:var(--text-muted);margin:0 0 14px">What's happening this day?</p>
+    <button class="opt-btn ${choice.mode === 0 ? 'active' : ''}" onclick="pickMode('${date}',0)">
+      Explore the city<span class="sub">Self-guided walking tour</span>
+    </button>
+    <button class="opt-btn ${choice.mode === 1 ? 'active' : ''}" onclick="pickMode('${date}',1)">
+      Day trip<span class="sub">Full or half day, nearby destinations</span>
+    </button>
+    <button class="opt-btn ${choice.mode === 2 ? 'active' : ''}" onclick="pickMode('${date}',2)">
+      I already have a plan<span class="sub">Booked elsewhere, just block the time</span>
+    </button>
+    <div id="dayTripPanel"></div>
+  `;
+  return html;
+}
+
+async function renderDayTripPanel(date) {
+  const panel = document.getElementById("dayTripPanel");
+  const choice = state.dayChoices[date];
+  if (choice.mode !== 1) { panel.innerHTML = ""; return; }
+
+  panel.innerHTML = `<p class="loading">Loading day trips for ${state.baseCity}...</p>`;
+  const trips = await fetchDaytrips(state.baseCity);
+
+  if (!trips.length) {
+    panel.innerHTML = `<p class="loading">No curated day trips available for ${state.baseCity} yet.</p>`;
+    return;
+  }
+
+  let html = trips.map(t => `
+    <div class="trip-card ${choice.destinationId === t.id ? 'active' : ''}"
+         style="cursor:pointer;border:1px solid var(--border);${choice.destinationId === t.id ? 'border:2px solid var(--teal);background:var(--teal-light)' : ''}"
+         onclick="pickTrip('${date}','${t.id}')">
+      <span class="label">${t.name}<span class="badge ${t.duration}">${t.duration === 'half' ? 'half day' : 'full day'}</span></span>
+      <span class="detail">${t.getThere}</span>
+    </div>
+  `).join("");
+
+  if (choice.destinationId) {
+    html += `
+      <label>How do you want to do it?</label>
+      <div class="mode-row">
+        <button class="${choice.tripMode === 'self-guided' ? 'active' : ''}" onclick="pickTripMode('${date}','self-guided')">Self-guided</button>
+        <button class="${choice.tripMode === 'guided' ? 'active' : ''}" onclick="pickTripMode('${date}','guided')">Find a guide</button>
+      </div>
+    `;
+  }
+
+  panel.innerHTML = html;
+}
+
+function renderAlreadyPlannedPanel(date) {
+  const panel = document.getElementById("dayTripPanel");
+  const choice = state.dayChoices[date];
+  panel.innerHTML = `
+    <label>Start time</label>
+    <input id="plannedStart-${date}" type="time" value="${choice.start || '09:00'}" onchange="state.dayChoices['${date}'].start=this.value">
+    <label>End time</label>
+    <input id="plannedEnd-${date}" type="time" value="${choice.end || '18:00'}" onchange="state.dayChoices['${date}'].end=this.value">
+    <label>Note (optional)</label>
+    <input id="plannedNote-${date}" value="${choice.note || ''}" placeholder="e.g. Bohemian Switzerland via Viator" onchange="state.dayChoices['${date}'].note=this.value">
+  `;
+}
+
+function renderReviewScreen() {
+  const days = buildFinalDays();
+  let html = `<p class="step-count">Review</p><h2>Your ${state.baseCity} trip</h2>`;
+  days.forEach(day => {
+    const colorClass = day.dayType === "arrival" || day.dayType === "departure" ? "teal" : "purple";
+    const bg = colorClass === "teal" ? "var(--teal-light)" : "var(--purple-light)";
+    const color = colorClass === "teal" ? "var(--teal)" : "var(--purple)";
+    const dateLabel = new Date(day.date + "T00:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const segSummary = day.segments.map(s => segmentSummary(s)).join(" + ");
+    html += `
+      <div class="trip-card" style="background:${bg}">
+        <span class="label" style="color:${color}">${dateLabel} — ${day.dayType}</span>
+        <span class="detail">${segSummary}</span>
+      </div>
+    `;
+  });
+  html += `<div id="saveResult"></div>`;
+  return html;
+}
+
+function segmentSummary(seg) {
+  if (seg.type === "open-city") return `Explore ${state.baseCity} (${seg.start}\u2013${seg.end})`;
+  if (seg.type === "day-trip") {
+    const trips = state.daytripsCache[state.baseCity.toLowerCase()] || [];
+    const t = trips.find(x => x.id === seg.destinationId);
+    return `${t ? t.name : seg.destinationId} \u2014 ${seg.mode === 'guided' ? 'guided' : 'self-guided'} (${seg.start}\u2013${seg.end})`;
+  }
+  if (seg.type === "external-booked") return `${seg.note || 'Booked'} (${seg.start}\u2013${seg.end})`;
+  return "";
+}
+
+function buildFinalDays() {
+  return state.computedDays.map(day => {
+    if (day.dayType !== "full") return day;
+    const choice = state.dayChoices[day.date] || {};
+    let segments;
+    if (choice.mode === 0 || choice.mode === undefined) {
+      segments = [{ type: "open-city", start: "09:00", end: "20:00" }];
+    } else if (choice.mode === 1) {
+      const trips = state.daytripsCache[state.baseCity.toLowerCase()] || [];
+      const t = trips.find(x => x.id === choice.destinationId);
+      const isHalf = t && t.duration === "half";
+      const tripSeg = {
+        type: "day-trip",
+        start: "08:00",
+        end: isHalf ? "15:00" : "20:00",
+        destinationId: choice.destinationId,
+        duration: t ? t.duration : "full",
+        mode: choice.tripMode || "self-guided"
+      };
+      segments = isHalf ? [tripSeg, { type: "open-city", start: "15:00", end: "20:00" }] : [tripSeg];
+    } else {
+      segments = [{ type: "external-booked", start: choice.start || "09:00", end: choice.end || "18:00", note: choice.note || "" }];
+    }
+    return { ...day, segments };
+  });
+}
+
+// ---- navigation & interaction handlers ----
+function pickMode(date, mode) {
+  state.dayChoices[date] = { ...(state.dayChoices[date] || {}), mode };
+  render();
+}
+function pickTrip(date, id) {
+  state.dayChoices[date].destinationId = id;
+  state.dayChoices[date].tripMode = null;
+  renderDayTripPanel(date);
+}
+function pickTripMode(date, mode) {
+  state.dayChoices[date].tripMode = mode;
+  renderDayTripPanel(date);
+}
+
+function screens() {
+  const list = [{ type: "dates" }];
+  fullDayDates().forEach(date => list.push({ type: "day", date }));
+  list.push({ type: "review" });
+  return list;
+}
+
+function render() {
+  const wizard = document.getElementById("wizard");
+  const scr = screens()[state.step];
+  let body = "";
+  if (scr.type === "dates") body = renderTripDatesScreen();
+  else if (scr.type === "day") body = renderDayScreen(scr.date);
+  else if (scr.type === "review") body = renderReviewScreen();
+
+  wizard.innerHTML = `
+    <h1>Multi-day planner</h1>
+    ${body}
+    <div class="nav-row">
+      <button class="secondary" onclick="goBack()" ${state.step === 0 ? 'style="visibility:hidden"' : ''}>Back</button>
+      <button class="primary" onclick="goNext()">${scr.type === "review" ? "Save trip" : "Next"}</button>
+    </div>
+  `;
+
+  if (scr.type === "day" && state.dayChoices[scr.date]) {
+    const mode = state.dayChoices[scr.date].mode;
+    if (mode === 1) renderDayTripPanel(scr.date);
+    if (mode === 2) renderAlreadyPlannedPanel(scr.date);
+  }
+}
+
+function goBack() {
+  if (state.step === 0) return;
+  state.step--;
+  render();
+}
+
+async function goNext() {
+  const scr = screens()[state.step];
+
+  if (scr.type === "dates") {
+    state.baseCity = document.getElementById("baseCity").value.trim();
+    state.arrivalDate = document.getElementById("arrivalDate").value;
+    state.arrivalTime = document.getElementById("arrivalTime").value;
+    state.departureDate = document.getElementById("departureDate").value;
+    state.departureTime = document.getElementById("departureTime").value;
+
+    const errBox = document.getElementById("dateError");
+    if (!state.baseCity || !state.arrivalDate || !state.departureDate) {
+      errBox.textContent = "Please fill in city and both dates.";
+      return;
+    }
+    if (new Date(state.departureDate) < new Date(state.arrivalDate)) {
+      errBox.textContent = "Departure date must be on or after arrival date.";
+      return;
+    }
+    state.computedDays = computeDays();
+    // pre-fetch day trips so the day screens feel instant
+    fetchDaytrips(state.baseCity);
+  }
+
+  if (scr.type === "review") {
+    await saveTrip();
+    return;
+  }
+
+  state.step++;
+  render();
+}
+
+async function saveTrip() {
+  const resultBox = document.getElementById("saveResult");
+  resultBox.innerHTML = `<p class="loading">Saving your trip...</p>`;
+
+  const trip = {
+    baseCity: state.baseCity,
+    arrival: { date: state.arrivalDate, time: state.arrivalTime },
+    departure: { date: state.departureDate, time: state.departureTime },
+    days: buildFinalDays()
+  };
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/trip`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(trip)
+    });
+    const data = await res.json();
+    if (data.tripId) {
+      state.savedTripId = data.tripId;
+      const shareUrl = `${window.location.origin}${window.location.pathname}?trip=${data.tripId}`;
+      resultBox.innerHTML = `
+        <div class="share-box">
+          <strong>Trip saved!</strong><br>
+          Share link: <a href="${shareUrl}">${shareUrl}</a>
+        </div>
+      `;
+    } else {
+      resultBox.innerHTML = `<p class="error">${data.error || "Something went wrong saving your trip."}</p>`;
+    }
+  } catch (err) {
+    resultBox.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+  }
+}
+
+// ---- load existing trip if ?trip=... is present ----
+async function loadFromUrlIfPresent() {
+  const params = new URLSearchParams(window.location.search);
+  const tripId = params.get("trip");
+  if (!tripId) return false;
+
+  const wizard = document.getElementById("wizard");
+  wizard.innerHTML = `<h1>Loading your trip...</h1>`;
+  try {
+    const res = await fetch(`${BASE_URL}/api/trip?id=${tripId}`);
+    const data = await res.json();
+    if (data.trip) {
+      state.baseCity = data.trip.baseCity;
+      state.arrivalDate = data.trip.arrival.date;
+      state.arrivalTime = data.trip.arrival.time;
+      state.departureDate = data.trip.departure.date;
+      state.departureTime = data.trip.departure.time;
+      state.computedDays = data.trip.days;
+      state.savedTripId = tripId;
+      await fetchDaytrips(state.baseCity);
+      state.step = screens().length - 1; // jump straight to review
+      render();
+      return true;
+    }
+  } catch (err) {
+    wizard.innerHTML = `<h1>Trip not found</h1><p class="error">${err.message}</p>`;
+    return true;
+  }
+  return false;
+}
+
+(async function init() {
+  const loaded = await loadFromUrlIfPresent();
+  if (!loaded) render();
+})();
+</script>
+
+</body>
+</html>
