@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Travelens API Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+  button { padding: 12px 20px; font-size: 15px; margin: 8px 8px 8px 0; cursor: pointer; border-radius: 8px; border: 1px solid #ccc; background: #f5f5f5; }
+  button:hover { background: #eee; }
+  pre { background: #111; color: #0f0; padding: 16px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  h2 { margin-top: 32px; }
+  input { padding: 8px; width: 100%; box-sizing: border-box; margin: 6px 0 12px; }
+</style>
+</head>
+<body>
+
+<h1>Travelens API Test Page</h1>
+<p>Open this file directly in your browser (double-click it, or drag into a tab). No console needed.</p>
+
+<h2>1. Save a test trip (POST)</h2>
+<button onclick="saveTrip()">Save Test Trip</button>
+<pre id="saveOutput">Click the button above...</pre>
+
+<h2>2. Load a trip back (GET)</h2>
+<input id="tripIdInput" placeholder="Paste the tripId from step 1 here">
+<button onclick="loadTrip()">Load Trip</button>
+<pre id="loadOutput">Click the button above...</pre>
+
+<script>
+const BASE_URL = "https://travelens-git-dev-mdamera77s-projects.vercel.app";
+
+async function saveTrip() {
+  const out = document.getElementById("saveOutput");
+  out.textContent = "Sending...";
+  try {
+    const res = await fetch(`${BASE_URL}/api/trip`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        baseCity: "Prague",
+        arrival: { date: "2026-09-10", time: "14:30" },
+        departure: { date: "2026-09-13", time: "14:00" },
+        days: [
+          { date: "2026-09-10", dayType: "arrival", segments: [{ type: "open-city", start: "17:00", end: "21:00" }] },
+          { date: "2026-09-11", dayType: "full", segments: [{ type: "external-booked", start: "09:00", end: "18:00", note: "Bohemian Switzerland via Viator" }] },
+          { date: "2026-09-12", dayType: "full", segments: [
+            { type: "day-trip", start: "08:00", end: "15:00", destinationId: "kutna-hora", duration: "half", mode: "self-guided" },
+            { type: "open-city", start: "15:00", end: "20:00" }
+          ]},
+          { date: "2026-09-13", dayType: "departure", segments: [{ type: "open-city", start: "09:00", end: "13:00" }] }
+        ]
+      })
+    });
+    const data = await res.json();
+    out.textContent = JSON.stringify(data, null, 2);
+    if (data.tripId) {
+      document.getElementById("tripIdInput").value = data.tripId;
+    }
+  } catch (err) {
+    out.textContent = "Error: " + err.message;
+  }
+}
+
+async function loadTrip() {
+  const out = document.getElementById("loadOutput");
+  const id = document.getElementById("tripIdInput").value.trim();
+  if (!id) { out.textContent = "Paste a tripId first."; return; }
+  out.textContent = "Loading...";
+  try {
+    const res = await fetch(`${BASE_URL}/api/trip?id=${id}`);
+    const data = await res.json();
+    out.textContent = JSON.stringify(data, null, 2);
+  } catch (err) {
+    out.textContent = "Error: " + err.message;
+  }
+}
+</script>
+
+</body>
+</html>
