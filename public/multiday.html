@@ -129,24 +129,25 @@ function addHours(time, h) {
   return String(nh).padStart(2, "0") + ":" + String(nm).padStart(2, "0");
 }
 
+function timeLessThan(a, b) {
+  return a < b; // safe since HH:MM zero-padded strings compare lexically
+}
+
 function computeDays() {
   const dates = dateRange(state.arrivalDate, state.departureDate);
   return dates.map((date, i) => {
     const isFirst = i === 0;
     const isLast = i === dates.length - 1;
+    if (dates.length === 1) {
+      return { date, dayType: "arrival-departure", window: { start: addHours(state.arrivalTime, 1), end: addHours(state.departureTime, -2) } };
+    }
     if (isFirst) {
-      return {
-        date, dayType: "arrival",
-        segments: [{ type: "open-city", start: addHours(state.arrivalTime, 1), end: "21:00" }]
-      };
+      return { date, dayType: "arrival", window: { start: addHours(state.arrivalTime, 1), end: "21:00" } };
     }
     if (isLast) {
-      return {
-        date, dayType: "departure",
-        segments: [{ type: "open-city", start: "09:00", end: addHours(state.departureTime, -2) }]
-      };
+      return { date, dayType: "departure", window: { start: "09:00", end: addHours(state.departureTime, -2) } };
     }
-    return { date, dayType: "full", segments: null }; // filled in later from dayChoices
+    return { date, dayType: "full", window: { start: "09:00", end: "20:00" } };
   });
 }
 
@@ -179,17 +180,57 @@ function renderTripDatesScreen() {
   `;
 }
 
-function fullDayDates() {
-  return state.computedDays.filter(d => d.dayType === "full").map(d => d.date);
+function allDates() {
+  return state.computedDays.map(d => d.date);
+}
+
+function renderOverviewScreen() {
+  const total = state.computedDays.length;
+  let html = `
+    <p class="step-count">Overview</p>
+    <h2>Your ${total}-day trip</h2>
+    <p style="font-size:14px;color:var(--text-muted);margin:0 0 16px">
+      You'll answer <strong>${total} question${total > 1 ? 's' : ''}</strong> \u2014 one per day. Arrival and departure days show a shorter window since part of the day is travel.
+    </p>
+  `;
+  state.computedDays.forEach((day) => {
+    const dateLabel = new Date(day.date + "T00:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const isBookend = day.dayType === "arrival" || day.dayType === "departure" || day.dayType === "arrival-departure";
+    const bg = isBookend ? "var(--teal-light)" : "var(--purple-light)";
+    const color = isBookend ? "var(--teal)" : "var(--purple)";
+    const tag = isBookend
+      ? `${day.dayType} \u2014 available ${day.window.start}\u2013${day.window.end}`
+      : `full day \u2014 available ${day.window.start}\u2013${day.window.end}`;
+    html += `
+      <div class="trip-card" style="background:${bg}">
+        <span class="label" style="color:${color}">${dateLabel}</span>
+        <span class="detail">${tag}</span>
+      </div>
+    `;
+  });
+  return html;
 }
 
 function renderDayScreen(date) {
   const choice = state.dayChoices[date] || {};
+  const day = state.computedDays.find(d => d.date === date);
   const dayLabel = new Date(date + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+  const dates = allDates();
+  const qNum = dates.indexOf(date) + 1;
+  const qTotal = dates.length;
+
+  const windowNote = day.dayType === "arrival"
+    ? `Landing at ${state.arrivalTime} \u2014 you'll have ${day.window.start} to ${day.window.end} free.`
+    : day.dayType === "departure"
+    ? `Heading out at ${state.departureTime} \u2014 you'll have ${day.window.start} to ${day.window.end} free.`
+    : day.dayType === "arrival-departure"
+    ? `Landing at ${state.arrivalTime}, leaving at ${state.departureTime} \u2014 you'll have ${day.window.start} to ${day.window.end} free.`
+    : `Full day available: ${day.window.start} \u2013 ${day.window.end}`;
 
   let html = `
-    <p class="step-count">Full day</p>
+    <p class="step-count">Question ${qNum} of ${qTotal}</p>
     <h2>${dayLabel}</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin:0 0 14px">${windowNote}</p>
     <p style="font-size:14px;color:var(--text-muted);margin:0 0 14px">What's happening this day?</p>
     <button class="opt-btn ${choice.mode === 0 ? 'active' : ''}" onclick="pickMode('${date}',0)">
       Explore the city<span class="sub">Self-guided walking tour</span>
@@ -243,11 +284,12 @@ async function renderDayTripPanel(date) {
 function renderAlreadyPlannedPanel(date) {
   const panel = document.getElementById("dayTripPanel");
   const choice = state.dayChoices[date];
+  const day = state.computedDays.find(d => d.date === date);
   panel.innerHTML = `
     <label>Start time</label>
-    <input id="plannedStart-${date}" type="time" value="${choice.start || '09:00'}" onchange="state.dayChoices['${date}'].start=this.value">
+    <input id="plannedStart-${date}" type="time" value="${choice.start || day.window.start}" onchange="state.dayChoices['${date}'].start=this.value">
     <label>End time</label>
-    <input id="plannedEnd-${date}" type="time" value="${choice.end || '18:00'}" onchange="state.dayChoices['${date}'].end=this.value">
+    <input id="plannedEnd-${date}" type="time" value="${choice.end || day.window.end}" onchange="state.dayChoices['${date}'].end=this.value">
     <label>Note (optional)</label>
     <input id="plannedNote-${date}" value="${choice.note || ''}" placeholder="e.g. Bohemian Switzerland via Viator" onchange="state.dayChoices['${date}'].note=this.value">
   `;
@@ -286,28 +328,38 @@ function segmentSummary(seg) {
 
 function buildFinalDays() {
   return state.computedDays.map(day => {
-    if (day.dayType !== "full") return day;
     const choice = state.dayChoices[day.date] || {};
+    const w = day.window;
     let segments;
-    if (choice.mode === 0 || choice.mode === undefined) {
-      segments = [{ type: "open-city", start: "09:00", end: "20:00" }];
-    } else if (choice.mode === 1) {
+
+    if (choice.mode === 1) {
       const trips = state.daytripsCache[state.baseCity.toLowerCase()] || [];
       const t = trips.find(x => x.id === choice.destinationId);
       const isHalf = t && t.duration === "half";
+      let tripEnd = w.end;
+      if (isHalf) {
+        const proposedEnd = addHours(w.start, 6);
+        tripEnd = timeLessThan(proposedEnd, w.end) ? proposedEnd : w.end;
+      }
       const tripSeg = {
         type: "day-trip",
-        start: "08:00",
-        end: isHalf ? "15:00" : "20:00",
+        start: w.start,
+        end: tripEnd,
         destinationId: choice.destinationId,
         duration: t ? t.duration : "full",
         mode: choice.tripMode || "self-guided"
       };
-      segments = isHalf ? [tripSeg, { type: "open-city", start: "15:00", end: "20:00" }] : [tripSeg];
+      segments = [tripSeg];
+      if (timeLessThan(tripEnd, w.end)) {
+        segments.push({ type: "open-city", start: tripEnd, end: w.end });
+      }
+    } else if (choice.mode === 2) {
+      segments = [{ type: "external-booked", start: choice.start || w.start, end: choice.end || w.end, note: choice.note || "" }];
     } else {
-      segments = [{ type: "external-booked", start: choice.start || "09:00", end: choice.end || "18:00", note: choice.note || "" }];
+      segments = [{ type: "open-city", start: w.start, end: w.end }];
     }
-    return { ...day, segments };
+
+    return { date: day.date, dayType: day.dayType, segments };
   });
 }
 
@@ -328,7 +380,8 @@ function pickTripMode(date, mode) {
 
 function screens() {
   const list = [{ type: "dates" }];
-  fullDayDates().forEach(date => list.push({ type: "day", date }));
+  if (state.computedDays.length) list.push({ type: "overview" });
+  allDates().forEach(date => list.push({ type: "day", date }));
   list.push({ type: "review" });
   return list;
 }
@@ -338,6 +391,7 @@ function render() {
   const scr = screens()[state.step];
   let body = "";
   if (scr.type === "dates") body = renderTripDatesScreen();
+  else if (scr.type === "overview") body = renderOverviewScreen();
   else if (scr.type === "day") body = renderDayScreen(scr.date);
   else if (scr.type === "review") body = renderReviewScreen();
 
