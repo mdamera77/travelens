@@ -99,6 +99,7 @@ const state = {
   dayChoices: {},   // { "2026-09-11": { mode: 0|1|2, tripId, mode2, note, start, end } }
   daytripsCache: {}, // { prague: [...] }
   computedDays: [],
+  generatedTours: {}, // { "2026-09-10::0": "STOP 1: ..." }
   savedTripId: null,
   savedTripKey: null
 };
@@ -299,17 +300,34 @@ function renderReviewScreen() {
   const days = buildFinalDays();
   let html = `<p class="step-count">Review</p><h2>Your ${state.baseCity} trip</h2>`;
   days.forEach(day => {
-    const colorClass = day.dayType === "arrival" || day.dayType === "departure" ? "teal" : "purple";
-    const bg = colorClass === "teal" ? "var(--teal-light)" : "var(--purple-light)";
-    const color = colorClass === "teal" ? "var(--teal)" : "var(--purple)";
+    const isBookend = day.dayType === "arrival" || day.dayType === "departure" || day.dayType === "arrival-departure";
+    const bg = isBookend ? "var(--teal-light)" : "var(--purple-light)";
+    const color = isBookend ? "var(--teal)" : "var(--purple)";
     const dateLabel = new Date(day.date + "T00:00:00").toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-    const segSummary = day.segments.map(s => segmentSummary(s)).join(" + ");
+
     html += `
       <div class="trip-card" style="background:${bg}">
-        <span class="label" style="color:${color}">${dateLabel} — ${day.dayType}</span>
-        <span class="detail">${segSummary}</span>
-      </div>
+        <span class="label" style="color:${color}">${dateLabel} \u2014 ${day.dayType}</span>
     `;
+
+    day.segments.forEach((seg, idx) => {
+      const key = `${day.date}::${idx}`;
+      const canGenerate = seg.type === "open-city" || (seg.type === "day-trip" && seg.mode !== "guided");
+      html += `<div style="margin-top:8px"><span class="detail">${segmentSummary(seg)}</span>`;
+
+      if (canGenerate) {
+        if (state.generatedTours[key]) {
+          html += `<div id="gen-${day.date}-${idx}"><pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;background:#f5f5f5;padding:12px;border-radius:10px;max-height:300px;overflow-y:auto">${escapeHtml(state.generatedTours[key])}</pre></div>`;
+        } else {
+          html += `<div id="gen-${day.date}-${idx}"><button class="secondary" style="margin-top:6px;padding:8px 14px;font-size:13px" onclick="generateSegmentTour('${day.date}',${idx})">Generate my tour</button></div>`;
+        }
+      } else if (seg.type === "day-trip" && seg.mode === "guided") {
+        html += `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">You'll explore with a guide \u2014 no self-guided content needed.</div>`;
+      }
+      html += `</div>`;
+    });
+
+    html += `</div>`;
   });
   html += `<div id="saveResult"></div>`;
   return html;
@@ -324,6 +342,53 @@ function segmentSummary(seg) {
   }
   if (seg.type === "external-booked") return `${seg.note || 'Booked'} (${seg.start}\u2013${seg.end})`;
   return "";
+}
+
+function timeDiffHours(start, end) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  return ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function generateSegmentTour(date, segIndex) {
+  const box = document.getElementById(`gen-${date}-${segIndex}`);
+  box.innerHTML = `<p class="loading">Generating your tour...</p>`;
+
+  const days = buildFinalDays();
+  const day = days.find(d => d.date === date);
+  const seg = day.segments[segIndex];
+
+  let city = state.baseCity;
+  if (seg.type === "day-trip") {
+    const trips = state.daytripsCache[state.baseCity.toLowerCase()] || [];
+    const t = trips.find(x => x.id === seg.destinationId);
+    city = t ? t.name : seg.destinationId;
+  }
+
+  const hours = timeDiffHours(seg.start, seg.end);
+  const stamina = hours >= 7 ? "full day" : hours >= 4 ? "half day" : `short, about ${Math.round(hours)} hours`;
+
+  try {
+    const res = await fetch(`${BASE_URL}/api/tour`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ city, hotel: "city centre", dates: date, stamina })
+    });
+    const data = await res.json();
+    if (data.tour) {
+      const key = `${date}::${segIndex}`;
+      state.generatedTours[key] = data.tour;
+      box.innerHTML = `<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;background:#f5f5f5;padding:12px;border-radius:10px;max-height:300px;overflow-y:auto">${escapeHtml(data.tour)}</pre>`;
+    } else {
+      box.innerHTML = `<p class="error">${data.error || "Failed to generate tour"}</p>`;
+    }
+  } catch (err) {
+    box.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+  }
 }
 
 function buildFinalDays() {
