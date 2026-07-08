@@ -153,6 +153,15 @@ function computeDays() {
 }
 
 // ---- day trips fetch ----
+function buildBrowseLinks(city) {
+  const q = encodeURIComponent(`${city} day trips tours experiences`);
+  return [
+    { name: "Viator", url: `https://www.viator.com/searchResults/all?text=${q}` },
+    { name: "GetYourGuide", url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(city)}` },
+    { name: "TripAdvisor", url: `https://www.tripadvisor.com/Search?q=${q}` }
+  ];
+}
+
 async function fetchDaytrips(city) {
   const key = city.toLowerCase();
   if (state.daytripsCache[key]) return state.daytripsCache[key];
@@ -279,6 +288,15 @@ async function renderDayTripPanel(date) {
     `;
   }
 
+  const links = buildBrowseLinks(state.baseCity);
+  html += `
+    <p style="font-size:12px;color:var(--text-muted);margin:14px 0 6px">Not seeing what you want? Browse more options:</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${links.map(l => `<a href="${l.url}" target="_blank" rel="noopener" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text)">${l.name} \u2197</a>`).join("")}
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:8px 0 0">Found something? Switch to "I already have a plan" on the previous screen and paste the link.</p>
+  `;
+
   panel.innerHTML = html;
 }
 
@@ -286,13 +304,20 @@ function renderAlreadyPlannedPanel(date) {
   const panel = document.getElementById("dayTripPanel");
   const choice = state.dayChoices[date];
   const day = state.computedDays.find(d => d.date === date);
+  const links = buildBrowseLinks(state.baseCity);
   panel.innerHTML = `
     <label>Start time</label>
     <input id="plannedStart-${date}" type="time" value="${choice.start || day.window.start}" onchange="state.dayChoices['${date}'].start=this.value">
     <label>End time</label>
     <input id="plannedEnd-${date}" type="time" value="${choice.end || day.window.end}" onchange="state.dayChoices['${date}'].end=this.value">
-    <label>Note (optional)</label>
-    <input id="plannedNote-${date}" value="${choice.note || ''}" placeholder="e.g. Bohemian Switzerland via Viator" onchange="state.dayChoices['${date}'].note=this.value">
+    <label>What is it? (optional)</label>
+    <input id="plannedNote-${date}" value="${choice.note || ''}" placeholder="e.g. Bohemian Switzerland tour" onchange="state.dayChoices['${date}'].note=this.value">
+    <label>Booking link (optional)</label>
+    <input id="plannedUrl-${date}" value="${choice.bookingUrl || ''}" placeholder="Paste the Viator/GetYourGuide/etc. link" onchange="state.dayChoices['${date}'].bookingUrl=this.value">
+    <p style="font-size:12px;color:var(--text-muted);margin:10px 0 6px">Haven't booked yet? Browse options:</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${links.map(l => `<a href="${l.url}" target="_blank" rel="noopener" style="font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--text)">${l.name} \u2197</a>`).join("")}
+    </div>
   `;
 }
 
@@ -340,7 +365,12 @@ function segmentSummary(seg) {
     const t = trips.find(x => x.id === seg.destinationId);
     return `${t ? t.name : seg.destinationId} \u2014 ${seg.mode === 'guided' ? 'guided' : 'self-guided'} (${seg.start}\u2013${seg.end})`;
   }
-  if (seg.type === "external-booked") return `${seg.note || 'Booked'} (${seg.start}\u2013${seg.end})`;
+  if (seg.type === "external-booked") {
+    const label = `${seg.note || 'Booked'} (${seg.start}\u2013${seg.end})`;
+    return seg.bookingUrl
+      ? `${label} \u2014 <a href="${seg.bookingUrl}" target="_blank" rel="noopener">view booking \u2197</a>`
+      : label;
+  }
   return "";
 }
 
@@ -419,7 +449,7 @@ function buildFinalDays() {
         segments.push({ type: "open-city", start: tripEnd, end: w.end });
       }
     } else if (choice.mode === 2) {
-      segments = [{ type: "external-booked", start: choice.start || w.start, end: choice.end || w.end, note: choice.note || "" }];
+      segments = [{ type: "external-booked", start: choice.start || w.start, end: choice.end || w.end, note: choice.note || "", bookingUrl: choice.bookingUrl || "" }];
     } else {
       segments = [{ type: "open-city", start: w.start, end: w.end }];
     }
